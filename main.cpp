@@ -11,6 +11,12 @@
 #define SCREENH 600
 #define APP_NAME "Vulkan Demo"
 
+/*
+ * Vulkan Tutorial
+ * https://vulkan-tutorial.com
+ * Page 64
+ */
+
 const std::vector<const char *> VALIDATION_LAYERS = {
 	"VK_LAYER_LUNARG_standard_validation"
 };
@@ -42,6 +48,38 @@ VkResult DestroyDebugReportCallbackEXT(VkInstance instance,
 	if (func != nullptr) { func(instance, callback, pAllocator); }
 }
 
+struct QueueFamilyIndecies {
+	int graphicsFamily = -1;
+
+	bool isComplete() {
+		return graphicsFamily >= 0;
+	}
+
+	static QueueFamilyIndecies findQueueFamilies(VkPhysicalDevice device) {
+		QueueFamilyIndecies indecies;
+
+		uint32_t queueFamilyCount = 0;
+		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+		std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+
+		int i = 0;
+		for (const auto &queueFamily : queueFamilies) {
+			if (queueFamily.queueCount > 0 && queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+				indecies.graphicsFamily = i;
+			}
+
+			if (indecies.isComplete()) {
+				break;
+			}
+
+			i++;
+		}
+
+		return indecies;
+	}
+};
+
 class HelloTriangleApplication {
 public:
 	void run() {
@@ -54,10 +92,27 @@ public:
 private:
 	/// Pointer to this applications main window managed by glfw.
 	GLFWwindow * window;
-	/// Manage the connection between this application and the Vulkan library.
-	VkInstance instance;
 	/// Manages Vulkan's interaction with our debug callback method.
 	VkDebugReportCallbackEXT callback;
+
+	/// Manage the connection between this application and the Vulkan library.
+	VkInstance instance;
+	/// Handle to the physical GPU we have chosen to perform our work
+	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+	/// Handle to the logical device to interface with the GPU.
+	VkDevice device;
+	/// Handle to the graphics queue for sending commands.
+	VkQueue graphicsQueue;
+
+	// -----------------------------
+	// Initialization and main loop.
+	// -----------------------------
+
+	void mainLoop() {
+		while (!glfwWindowShouldClose(window)) {
+			glfwPollEvents();
+		}
+	}
 
 	void initWindow() {
 		glfwInit();
@@ -71,7 +126,20 @@ private:
 		createInstance();
 		setupDebugCallback();
 		pickPhysicalDevice();
+		createLogicalDevice();
 	}
+
+	void cleanup() {
+		vkDestroyDevice(device, nullptr);
+		DestroyDebugReportCallbackEXT(instance, callback, nullptr);
+		vkDestroyInstance(instance, nullptr);
+		glfwDestroyWindow(window);
+		glfwTerminate();
+	}
+
+	// --------------------------
+	// Instance & Extension Setup
+	// --------------------------
 
 	void createInstance() {
 		// Check that all desired validation layers are supported.
@@ -121,9 +189,92 @@ private:
 		std::cout << std::endl;
 	}
 
-	void pickPhysicalDevice() {
-		// TODO
+	std::vector<const char *> getRequiredExtensions() {
+		std::vector<const char *> extensions;
+
+		unsigned glfwExtensionCount = 0;
+		const char ** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+
+		for (unsigned int i=0; i < glfwExtensionCount; i++) {
+			extensions.push_back(glfwExtensions[i]);
+		}
+
+		if (VALIDATION_LAYERS_ENABLED) {
+			extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+		}
+
+		return extensions;
 	}
+
+	// ----------------
+	// Device Selection
+	// ----------------
+
+	void pickPhysicalDevice() {
+		uint32_t deviceCount = 0;
+		vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+		if (deviceCount == 0) {
+			throw std::runtime_error("Failed to find a GPU with Vulkan support!");
+		}
+
+		std::vector<VkPhysicalDevice> devices(deviceCount);
+		vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+
+		for (const auto &d : devices) {
+			if (isDeviceSuitable(d)) {
+				physicalDevice = d;
+				break;
+			}
+		}
+
+		if (physicalDevice == VK_NULL_HANDLE) {
+			throw std::runtime_error("Failed to find a suitable GPU!");
+		}
+	}
+
+	bool isDeviceSuitable(VkPhysicalDevice device) {
+		// We just need a device with a queue family that supports graphics commands.
+		QueueFamilyIndecies indecies = QueueFamilyIndecies::findQueueFamilies(device);
+		return indecies.isComplete();
+	}
+
+	void createLogicalDevice() {
+		 QueueFamilyIndecies indecies = QueueFamilyIndecies::findQueueFamilies(physicalDevice);
+
+		 VkDeviceQueueCreateInfo queueCreateInfo = {};
+		 queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+		 queueCreateInfo.queueFamilyIndex = indecies.graphicsFamily;
+		 queueCreateInfo.queueCount = 1;
+
+		 float queuePriority = 1.0f;
+		 queueCreateInfo.pQueuePriorities = &queuePriority;
+
+		 VkPhysicalDeviceFeatures deviceFeatures = {};
+
+		 VkDeviceCreateInfo createInfo = {};
+		 createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+		 createInfo.pQueueCreateInfos = &queueCreateInfo;
+		 createInfo.queueCreateInfoCount = 1;
+		 createInfo.pEnabledFeatures = &deviceFeatures;
+
+		 createInfo.enabledExtensionCount = 0;
+		 if (VALIDATION_LAYERS_ENABLED) {
+			 createInfo.enabledLayerCount = static_cast<uint32_t>(VALIDATION_LAYERS.size());
+			 createInfo.ppEnabledLayerNames = VALIDATION_LAYERS.data();
+		 } else {
+			 createInfo.enabledLayerCount = 0;
+		 }
+
+		 if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) {
+			 throw std::runtime_error("Failed to create logical device!");
+		 }
+
+		 vkGetDeviceQueue(device, indecies.graphicsFamily, 0, &graphicsQueue);
+	}
+
+	// ----------------------
+	// Validation Layer Setup
+	// ----------------------
 
 	bool checkValidationLayerSupport() {
 		uint32_t layerCount;
@@ -154,23 +305,6 @@ private:
 		return true;
 	}
 
-	std::vector<const char *> getRequiredExtensions() {
-		std::vector<const char *> extensions;
-
-		unsigned glfwExtensionCount = 0;
-		const char ** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-
-		for (unsigned int i=0; i < glfwExtensionCount; i++) {
-			extensions.push_back(glfwExtensions[i]);
-		}
-
-		if (VALIDATION_LAYERS_ENABLED) {
-			extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
-		}
-
-		return extensions;
-	}
-
 	void setupDebugCallback() {
 		if (!VALIDATION_LAYERS_ENABLED) { return; }
 		VkDebugReportCallbackCreateInfoEXT createInfo = {};
@@ -191,19 +325,6 @@ private:
 			const char * layerPrefix, const char * msg, void * userData) {
 		std::cerr << "Validation Layer Reports: " << msg << std::endl;
 		return VK_FALSE;
-	}
-
-	void mainLoop() {
-		while (!glfwWindowShouldClose(window)) {
-			glfwPollEvents();
-		}
-	}
-
-	void cleanup() {
-		DestroyDebugReportCallbackEXT(instance, callback, nullptr);
-		vkDestroyInstance(instance, nullptr);
-		glfwDestroyWindow(window);
-		glfwTerminate();
 	}
 };
 
