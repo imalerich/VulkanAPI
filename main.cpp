@@ -19,10 +19,24 @@ using namespace std;
 /*
  * Vulkan Tutorial
  * https://vulkan-tutorial.com
- * Page 12
+ * Page 37
  */
 
 int main(int argc, char ** argv) {
-	cout << "Hello World!" << endl;
+	glfwInit();
+
+	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+	GLFWwindow * window = glfwCreateWindow(SCREENW, SCREENH, APP_NAME, nullptr, nullptr);
+
+	uint32_t extensionCount = 0;
+	vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
+	cout << extensionCount << " extensions supported" << endl;
+
+	while (!glfwWindowShouldClose(window)) {
+		glfwPollEvents();
+	}
+
+	glfwDestroyWindow(window);
+	glfwTerminate();
 	return 0;
 }
