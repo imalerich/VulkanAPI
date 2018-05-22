@@ -14,8 +14,15 @@
 #define SCREENH 600
 #define APP_NAME "Vulkan Demo"
 
+using namespace std;
+
 /*
  * Vulkan Tutorial
  * https://vulkan-tutorial.com
- * Page 0
+ * Page 12
  */
+
+int main(int argc, char ** argv) {
+	cout << "Hello World!" << endl;
+	return 0;
+}
