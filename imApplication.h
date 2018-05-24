@@ -41,7 +41,21 @@ private:
 	GLFWwindow * window;
 	/// Handle to our Vulkan instance. This is the connection between
 	/// this application and the Vulkan library.
-	VkInstance instance;
+	VkInstance instance = VK_NULL_HANDLE;
+	/// Handle to our selected physical device.
+	/// This will be selected based on a number of parameters,
+	/// such as desired supported Queue Families.
+	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+	/// Logical device created from our selected physical device.
+	VkDevice device = VK_NULL_HANDLE;
+
+	/// Handle to the graphics queue for sending graphics command pools.
+	VkQueue graphicsQueue = VK_NULL_HANDLE;
+	/// Handle to the presentation queue for presenting to the GLFW window.
+	VkQueue presentQueue = VK_NULL_HANDLE;
+
+	/// Vulkan (extension) handle to the representation of the GLFW created window.
+	VkSurfaceKHR surface;
 
 	/// Handle to validation layers debug callback.
 	VkDebugReportCallbackEXT callback;

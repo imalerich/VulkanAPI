@@ -7,7 +7,7 @@
 /*
  * Vulkan Tutorial
  * https://vulkan-tutorial.com
- * Page 54
+ * Page 69
  */
 
 int main(int argc, char ** argv) {

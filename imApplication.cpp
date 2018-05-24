@@ -27,7 +27,11 @@ void imApplication::InitGLFW(size_t screen_w, size_t screen_h, const char * app_
 void imApplication::InitVulkan() {
 	VKBuilder::CreateInstance(instance);
 	VKBuilder::PrintSupportedExtensions();
+	VKBuilder::CreateSurface(instance, window, surface);
 	VKDebug::SetupDebugCallback(instance, callback);
+	VKBuilder::SelectPhysicalDevice(instance, surface, physicalDevice);
+	VKBuilder::CreateLogicalDevice(physicalDevice, surface, 
+		device, graphicsQueue, presentQueue);
 }
 
 void imApplication::Cleanup() {
@@ -36,6 +40,8 @@ void imApplication::Cleanup() {
 		VKDebug::DestroyDebugReportCallbackEXT(instance, callback, nullptr);
 	}
 
+	vkDestroyDevice(device, nullptr);
+	vkDestroySurfaceKHR(instance, surface, nullptr);
 	vkDestroyInstance(instance, nullptr);
 
 	// GLFW
