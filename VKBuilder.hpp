@@ -84,7 +84,7 @@ public:
 
 		std::cout << "Available Extensions: " << std::endl;
 		for (const auto &extension : extensions) {
-			std::cout << "\t" << extension.extensionName << std::endl;
+			std::cout << "\t- " << extension.extensionName << std::endl;
 		}
 
 		std::cout << "-----------------------------------------------" << std::endl;
@@ -97,8 +97,8 @@ public:
 		}
 	}
 
-	static void SelectPhysicalDevice(VkInstance &instance, VkSurfaceKHR &surface, 
-			VkPhysicalDevice &pDevice) {
+	static void SelectPhysicalDevice(VkInstance &instance, 
+			VkSurfaceKHR &surface, VkPhysicalDevice &pDevice) {
 		uint32_t deviceCount = 0;
 		vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
 
@@ -106,19 +106,39 @@ public:
 			throw std::runtime_error("Failed to find GPUs with Vulkan support!");
 		}
 
-		std::cout << "Found " << deviceCount << " Device(s)!" << std::endl;
-		std::cout << "-----------------------------------------------" << std::endl;
-
 		std::vector<VkPhysicalDevice> devices(deviceCount);
 		vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
+		// Create a set of containing all suitable devices for our application.
+		std::set<VkPhysicalDevice> suitableDevices;
 		for (const auto &d : devices) {
+			// Print some information about each vulkan supported device.
+			VkPhysicalDeviceProperties prop;
+			vkGetPhysicalDeviceProperties(d, &prop);
+			std::cout << "Device Found: " << prop.deviceName << std::endl;
+			std::cout << "\t- API Version: " << prop.apiVersion << std::endl;
+			std::cout << "\t- Device Type: " << prop.deviceType << std::endl;
+
 			if (IsDeviceSuitable(d, surface)) {
-				pDevice = d;
+				suitableDevices.insert(d);
 				break;
 			}
+
+			std::cout << "-----------------------------------------------" << std::endl;
 		}
 
+		// Some interesting debug output about the devices we found.
+		std::cout << "Found " << deviceCount << " Device" 
+			<< (deviceCount == 1 ? "" : "s")
+			<< "!" << std::endl;
+		std::cout << suitableDevices.size() << " of them "
+			<< ((suitableDevices.size() == 1) ? "is" : "are")
+			<< " suitable." << std::endl;
+		std::cout << "-----------------------------------------------" << std::endl;
+
+		// Don't really care right now, could provide an interface for the
+		// user to select their preferred device by presenting each deviceName.
+		pDevice = *suitableDevices.begin();
 		if (pDevice == VK_NULL_HANDLE) {
 			throw std::runtime_error("Failed to find a suitable GPU!");
 		}
@@ -149,7 +169,7 @@ public:
 		std::set<std::string> requiredExtensions(
 			DEVICE_EXTENSIONS.begin(), DEVICE_EXTENSIONS.end());
 		for (const auto &extension : availableExtensions) {
-			std::cout << "Found extension " << extension.extensionName << 
+			std::cout << "\t- Found extension " << extension.extensionName << 
 				" for device." << std::endl;
 			requiredExtensions.erase(extension.extensionName);
 		}
@@ -196,7 +216,9 @@ public:
 		float queuePriority = 1.0f;
 
 		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-		std::set<int> uniqueQueueFamilies = { indices.graphicsFamily, indices.presentFamily };
+		std::set<int> uniqueQueueFamilies = { 
+			indices.graphicsFamily, indices.presentFamily 
+		};
 
 		// Need to create a graphics and a presentation queue.
 		for (int queueFamily : uniqueQueueFamilies) {
