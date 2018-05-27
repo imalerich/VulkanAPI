@@ -5,39 +5,9 @@
 #include <GLFW/glfw3.h>
 #include <vector>
 
-#include "VKSurfaceSelector.hpp"
 #include "PREFIX.h"
-
-const std::vector<const char *> VALIDATION_LAYERS = {
-	"VK_LAYER_LUNARG_standard_validation"
-};
-
-const std::vector<const char *> DEVICE_EXTENSIONS = {
-	VK_KHR_SWAPCHAIN_EXTENSION_NAME
-};
-
-#ifdef NDEBUG
-	const bool VALIDATION_LAYERS_ENABLED = false;
-#else
-	const bool VALIDATION_LAYERS_ENABLED = true;
-#endif
-
 #include "VKDebug.hpp"
-
-struct QueueFamilyIndices {
-	int graphicsFamily = -1;
-	int presentFamily = -1;
-
-	bool IsComplete() {
-		return (graphicsFamily >= 0) && (presentFamily >= 0);
-	}
-};
-
-struct SwapChainSupportDetails {
-	VkSurfaceCapabilitiesKHR capabilities;
-	std::vector<VkSurfaceFormatKHR> formats;
-	std::vector<VkPresentModeKHR> presentModes;
-};
+#include "VKSurfaceBuilder.hpp"
 
 class VKBuilder {
 public:
@@ -150,7 +120,8 @@ public:
 
 		bool swapChainAdequate = false;
 		if (extensionsSupported) {
-			SwapChainSupportDetails support = QuerySwapChainSupport(pDevice, surface);
+			SwapChainSupportDetails support = VKSurfaceBuilder::QuerySwapChainSupport(
+				pDevice, surface);
 			swapChainAdequate = !support.formats.empty() && !support.presentModes.empty();
 		}
 
@@ -292,116 +263,6 @@ public:
 		}
 
 		return extensions;
-	}
-
-	static SwapChainSupportDetails QuerySwapChainSupport
-			(VkPhysicalDevice &pDevice,VkSurfaceKHR &surface) {
-		SwapChainSupportDetails details;
-
-		// Surface Capabilites (# buffers, min/max sizes, etc).
-		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(pDevice, surface, 
-			&details.capabilities);
-
-		// Surface Formats (RGB, 8/16/32bit etc).
-		uint32_t formatCount;
-		vkGetPhysicalDeviceSurfaceFormatsKHR(pDevice, surface, &formatCount, nullptr);
-
-		if (formatCount != 0) {
-			details.formats.resize(formatCount);
-			vkGetPhysicalDeviceSurfaceFormatsKHR(pDevice, surface, 
-				&formatCount, details.formats.data());
-		}
-
-		// Presentation Modes.
-		uint32_t presentModeCount;
-		vkGetPhysicalDeviceSurfacePresentModesKHR(pDevice, surface, 
-			&presentModeCount, nullptr);
-
-		if (formatCount != 0) {
-			details.presentModes.resize(formatCount);
-			vkGetPhysicalDeviceSurfacePresentModesKHR(pDevice, surface, 
-				&presentModeCount, details.presentModes.data());
-		}
-
-		return details;
-	}
-
-	static void CreateSwapChain(
-			VkPhysicalDevice &pDevice, VkDevice device,
-			VkSurfaceKHR &surface, VkSwapchainKHR &swapChain) {
-		SwapChainSupportDetails details = QuerySwapChainSupport(pDevice, surface);
-
-		// Select the format, present mode, and the extent to use when
-		// creating our swap chain.
-		VkSurfaceFormatKHR format = VKSurfaceSelector::ChooseSwapSurfaceFormat(
-			details.formats);
-		VkPresentModeKHR presentMode = VKSurfaceSelector::ChooseSwapPresentMode(
-			details.presentModes);
-		VkExtent2D extent = VKSurfaceSelector::ChooseSwapExtent(details.capabilities);
-
-		// We also need to select how many images that will be in our queue.
-		// For tripple buffering, we want one more than minimum if possible.
-		uint32_t imageCount = details.capabilities.minImageCount + 1;
-		if (details.capabilities.maxImageCount > 0 // 0 => No Limit sans memory.
-				&& imageCount > details.capabilities.maxImageCount) {
-			// Uh-Oh! We want too many images! :(
-			imageCount = details.capabilities.maxImageCount;
-		}
-
-		// Now we can actually create our swap chain!!!
-		VkSwapchainCreateInfoKHR createInfo = { };
-		createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-		createInfo.surface = surface;
-
-		createInfo.minImageCount = imageCount;
-		createInfo.imageFormat = format.format;
-		createInfo.imageColorSpace = format.colorSpace;
-		createInfo.imageExtent = extent;
-		// Will be more than 1 for stereoscopic 3D applications.
-		createInfo.imageArrayLayers = 1;
-		// If we're doing off screen rendering for post-processing etc
-		// we'll be setting this to VK_IMAGE_USAGE_TRANSFER_DST_BIT but
-		// for now we're just rendering to the screen, so just use this.
-		createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-
-		QueueFamilyIndices indices = FindQueueFamilies(pDevice, surface);
-		uint32_t queueFamilyIndices[] = {
-			(uint32_t)indices.graphicsFamily,
-			(uint32_t)indices.presentFamily
-		};
-
-		if (indices.graphicsFamily != indices.presentFamily) {
-			createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-			createInfo.queueFamilyIndexCount = 2;
-			createInfo.pQueueFamilyIndices = queueFamilyIndices;
-		} else {
-			createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-			createInfo.queueFamilyIndexCount = 0; // Optional
-			createInfo.pQueueFamilyIndices = nullptr; // Optional
-		}
-
-		// Could instead tell the swap chain to perform a transform 
-		// such as rotations and horizontal/vertical flips.
-		createInfo.preTransform = details.capabilities.currentTransform;
-		// If we want blending with other windows in the window system
-		// for whatever reason. Obviously we'll always ignore this.
-		createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-		createInfo.presentMode = presentMode;
-		// If another window overlays ours clip obscurred pixels (don't
-		// render to that pixel). Offers better performance, but I can
-		// image it may effect some post processing (especially blurs)
-		// if we're running in windowed mode.
-		// We'll just take the better performance for now.
-		createInfo.clipped = VK_TRUE;
-		// If window is resized, we'll need to create a new swap chain.
-		// We'll learn more about this later.
-		createInfo.oldSwapchain = VK_NULL_HANDLE;
-
-		// Finally! We're reading to create the swap chain!
-		if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) 
-				!= VK_SUCCESS) {
-			throw std::runtime_error("Failed to create Swap Chain!");
-		}
 	}
 
 private:

@@ -60,6 +60,13 @@ private:
 	VkSurfaceKHR surface;
 	/// Holds all of our render targets, we'll be aiming for tripple buffering.
 	VkSwapchainKHR swapChain;
+	/// Handles to each image contained within our swap chain.
+	std::vector<VkImage> swapChainImages;
+
+	/// Image format that was used to create the swap chain, useful to keep around.
+	VkFormat swapChainImageFormat;
+	/// Extent of the swap chain images used to create the swap chain.
+	VkExtent2D swapChainExtent;
 
 	/// Handle to validation layers debug callback.
 	VkDebugReportCallbackEXT callback;

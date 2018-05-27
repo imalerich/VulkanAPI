@@ -1,5 +1,7 @@
 #include "imApplication.h"
+
 #include "VKBuilder.hpp"
+#include "VKSurfaceBuilder.hpp"
 
 imApplication::imApplication(size_t screen_w, size_t screen_h, const char * app_name) {
 	InitGLFW(screen_w, screen_h, app_name);
@@ -32,7 +34,9 @@ void imApplication::InitVulkan() {
 	VKBuilder::SelectPhysicalDevice(instance, surface, physicalDevice);
 	VKBuilder::CreateLogicalDevice(physicalDevice, surface, 
 		device, graphicsQueue, presentQueue);
-	VKBuilder::CreateSwapChain(physicalDevice, device, surface, swapChain);
+	VKSurfaceBuilder::CreateSwapChain(physicalDevice, device, surface, 
+		swapChain, VKBuilder::FindQueueFamilies(physicalDevice, surface),
+		swapChainImages, swapChainImageFormat, swapChainExtent);
 }
 
 void imApplication::Cleanup() {

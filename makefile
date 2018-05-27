@@ -5,7 +5,7 @@ OBJ = imApplication.o
 VulkanDemo: main.cpp glsl imApplication.o PREFIX.h
 	g++ $(CFLAGS) -o VulkanDemo main.cpp $(OBJ) $(LIBFLAGS)
 
-imApplication.o: imApplication.h imApplication.cpp VKBuilder.hpp VKDebug.hpp VKSurfaceSelector.hpp PREFIX.h
+imApplication.o: imApplication.h imApplication.cpp VKBuilder.hpp VKDebug.hpp VKSurfaceBuilder.hpp PREFIX.h
 	g++ $(CFLAGS) -c imApplication.cpp
 
 run: VulkanDemo
