@@ -2,10 +2,10 @@ CFLAGS = -std=c++11 -g
 LIBFLAGS = `pkg-config --static --libs glfw3` -lvulkan
 OBJ = imApplication.o
 
-VulkanDemo: main.cpp glsl imApplication.o
+VulkanDemo: main.cpp glsl imApplication.o PREFIX.h
 	g++ $(CFLAGS) -o VulkanDemo main.cpp $(OBJ) $(LIBFLAGS)
 
-imApplication.o: imApplication.h imApplication.cpp VKBuilder.hpp VKDebug.hpp
+imApplication.o: imApplication.h imApplication.cpp VKBuilder.hpp VKDebug.hpp VKSurfaceSelector.hpp PREFIX.h
 	g++ $(CFLAGS) -c imApplication.cpp
 
 run: VulkanDemo

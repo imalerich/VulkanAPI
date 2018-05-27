@@ -1,8 +1,5 @@
 #include "imApplication.h"
-
-#define SCREENW 800
-#define SCREENH 600
-#define APP_NAME "Vulkan Demo"
+#include "PREFIX.h"
 
 /*
  * Vulkan Tutorial

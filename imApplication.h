@@ -13,6 +13,8 @@
 #include <vector>
 #include <set>
 
+#include "PREFIX.h"
+
 class imApplication {
 public:
 	/**
@@ -56,6 +58,8 @@ private:
 
 	/// Vulkan (extension) handle to the representation of the GLFW created window.
 	VkSurfaceKHR surface;
+	/// Holds all of our render targets, we'll be aiming for tripple buffering.
+	VkSwapchainKHR swapChain;
 
 	/// Handle to validation layers debug callback.
 	VkDebugReportCallbackEXT callback;

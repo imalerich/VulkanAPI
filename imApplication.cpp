@@ -32,6 +32,7 @@ void imApplication::InitVulkan() {
 	VKBuilder::SelectPhysicalDevice(instance, surface, physicalDevice);
 	VKBuilder::CreateLogicalDevice(physicalDevice, surface, 
 		device, graphicsQueue, presentQueue);
+	VKBuilder::CreateSwapChain(physicalDevice, device, surface, swapChain);
 }
 
 void imApplication::Cleanup() {
@@ -40,6 +41,7 @@ void imApplication::Cleanup() {
 		VKDebug::DestroyDebugReportCallbackEXT(instance, callback, nullptr);
 	}
 
+	vkDestroySwapchainKHR(device, swapChain, nullptr);
 	vkDestroyDevice(device, nullptr);
 	vkDestroySurfaceKHR(instance, surface, nullptr);
 	vkDestroyInstance(instance, nullptr);
