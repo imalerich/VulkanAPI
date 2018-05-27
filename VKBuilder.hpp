@@ -9,6 +9,10 @@ const std::vector<const char *> VALIDATION_LAYERS = {
 	"VK_LAYER_LUNARG_standard_validation"
 };
 
+const std::vector<const char *> DEVICE_EXTENSIONS = {
+	VK_KHR_SWAPCHAIN_EXTENSION_NAME
+};
+
 #ifdef NDEBUG
 	const bool VALIDATION_LAYERS_ENABLED = false;
 #else
@@ -24,6 +28,12 @@ struct QueueFamilyIndices {
 	bool IsComplete() {
 		return (graphicsFamily >= 0) && (presentFamily >= 0);
 	}
+};
+
+struct SwapChainSupportDetails {
+	VkSurfaceCapabilitiesKHR capabilities;
+	std::vector<VkSurfaceFormatKHR> formats;
+	std::vector<VkPresentModeKHR> presentModes;
 };
 
 class VKBuilder {
@@ -113,7 +123,33 @@ public:
 
 	static bool IsDeviceSuitable(VkPhysicalDevice pDevice, VkSurfaceKHR &surface) {
 		QueueFamilyIndices indices = FindQueueFamilies(pDevice, surface);
-		return indices.IsComplete();
+		bool extensionsSupported = CheckDeviceExtensionsSupport(pDevice, surface);
+
+		bool swapChainAdequate = false;
+		if (extensionsSupported) {
+			SwapChainSupportDetails support = QuerySwapChainSupport(pDevice, surface);
+			swapChainAdequate = !support.formats.empty() && !support.presentModes.empty();
+		}
+
+		return indices.IsComplete() && swapChainAdequate && extensionsSupported;
+	}
+
+	static bool CheckDeviceExtensionsSupport(
+			VkPhysicalDevice &pDevice, VkSurfaceKHR &surface) {
+		uint32_t extensionCount;
+		vkEnumerateDeviceExtensionProperties(pDevice, nullptr, &extensionCount, nullptr);
+
+		std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+		vkEnumerateDeviceExtensionProperties(pDevice, nullptr, 
+			&extensionCount, availableExtensions.data());
+
+		std::set<std::string> requiredExtensions(
+			DEVICE_EXTENSIONS.begin(), DEVICE_EXTENSIONS.end());
+		for (const auto &extension : availableExtensions) {
+			requiredExtensions.erase(extension.extensionName);
+		}
+
+		return requiredExtensions.empty();
 	}
 
 	static QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice pDevice, 
@@ -227,6 +263,38 @@ public:
 		}
 
 		return extensions;
+	}
+
+	static SwapChainSupportDetails QuerySwapChainSupport
+			(VkPhysicalDevice &pDevice,VkSurfaceKHR &surface) {
+		SwapChainSupportDetails details;
+
+		// Surface Capabilites (# buffers, min/max sizes, etc).
+		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(pDevice, surface, 
+			&details.capabilities);
+
+		// Surface Formats (RGB, 8/16/32bit etc).
+		uint32_t formatCount;
+		vkGetPhysicalDeviceSurfaceFormatsKHR(pDevice, surface, &formatCount, nullptr);
+
+		if (formatCount != 0) {
+			details.formats.resize(formatCount);
+			vkGetPhysicalDeviceSurfaceFormatsKHR(pDevice, surface, 
+				&formatCount, details.formats.data());
+		}
+
+		// Presentation Modes.
+		uint32_t presentModeCount;
+		vkGetPhysicalDeviceSurfacePresentModesKHR(pDevice, surface, 
+			&presentModeCount, nullptr);
+
+		if (formatCount != 0) {
+			details.presentModes.resize(formatCount);
+			vkGetPhysicalDeviceSurfacePresentModesKHR(pDevice, surface, 
+				&presentModeCount, details.presentModes.data());
+		}
+
+		return details;
 	}
 
 private:
