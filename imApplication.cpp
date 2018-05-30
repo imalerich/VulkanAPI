@@ -39,6 +39,8 @@ void imApplication::InitVulkan() {
 		swapChainImages, swapChainImageFormat, swapChainExtent);
 	VKBuilder::CreateImageViews(swapChainImages, swapChainImageViews, 
 		swapChainImageFormat, device);
+
+	pipeline.LoadShaders(device, "shaders/vert.spv", "shaders/frag.spv");
 }
 
 void imApplication::Cleanup() {

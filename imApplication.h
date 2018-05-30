@@ -14,6 +14,7 @@
 #include <set>
 
 #include "PREFIX.h"
+#include "VKPipeline.h"
 
 class imApplication {
 public:
@@ -71,6 +72,9 @@ private:
 	VkFormat swapChainImageFormat;
 	/// Extent of the swap chain images used to create the swap chain.
 	VkExtent2D swapChainExtent;
+
+	/// Will hold a basic configuration for our graphics pipeline.
+	VKPipeline pipeline;
 
 	/// Handle to validation layers debug callback.
 	VkDebugReportCallbackEXT callback;
