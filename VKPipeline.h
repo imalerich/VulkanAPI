@@ -13,7 +13,8 @@ static std::vector<char> ReadFile(const std::string &filename);
 
 class VKPipeline {
 public:
-	void LoadShaders(VkDevice &device, std::string vertexFile, std::string fragFile);
+	void LoadShaders(VkDevice &device, VkExtent2D extent,
+		std::string vertexFile, std::string fragFile);
 
 	VkShaderModule CreateShaderModule(VkDevice &device, const std::vector<char> &code);
 
