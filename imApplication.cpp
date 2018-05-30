@@ -37,12 +37,18 @@ void imApplication::InitVulkan() {
 	VKSurfaceBuilder::CreateSwapChain(physicalDevice, device, surface, 
 		swapChain, VKBuilder::FindQueueFamilies(physicalDevice, surface),
 		swapChainImages, swapChainImageFormat, swapChainExtent);
+	VKBuilder::CreateImageViews(swapChainImages, swapChainImageViews, 
+		swapChainImageFormat, device);
 }
 
 void imApplication::Cleanup() {
 	// Vulkan
 	if (VALIDATION_LAYERS_ENABLED) {
 		VKDebug::DestroyDebugReportCallbackEXT(instance, callback, nullptr);
+	}
+
+	for (size_t i = 0; i < swapChainImageViews.size(); i++) {
+		vkDestroyImageView(device, swapChainImageViews[i], nullptr);
 	}
 
 	vkDestroySwapchainKHR(device, swapChain, nullptr);

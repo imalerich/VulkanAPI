@@ -62,6 +62,10 @@ private:
 	VkSwapchainKHR swapChain;
 	/// Handles to each image contained within our swap chain.
 	std::vector<VkImage> swapChainImages;
+	/// Views into each image of the swap chain.
+	/// This relationship is similar to the idea of having both a physical
+	/// device and a logical device to interface with that physical device.
+	std::vector<VkImageView> swapChainImageViews;
 
 	/// Image format that was used to create the swap chain, useful to keep around.
 	VkFormat swapChainImageFormat;
