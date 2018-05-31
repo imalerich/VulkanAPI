@@ -79,7 +79,7 @@ public:
 			VkPhysicalDevice &pDevice, VkDevice device,
 			VkSurfaceKHR &surface, VkSwapchainKHR &swapChain,
 			QueueFamilyIndices indices, std::vector<VkImage> &images,
-			VkFormat &swapChainImageFormat, VkExtent2D swapChainExtent) {
+			VkFormat &swapChainImageFormat, VkExtent2D &swapChainExtent) {
 		SwapChainSupportDetails details = QuerySwapChainSupport(pDevice, surface);
 
 		// Select the format, present mode, and the extent to use when

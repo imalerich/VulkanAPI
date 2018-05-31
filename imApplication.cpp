@@ -39,18 +39,22 @@ void imApplication::InitVulkan() {
 		swapChainImages, swapChainImageFormat, swapChainExtent);
 	VKBuilder::CreateImageViews(swapChainImages, swapChainImageViews, 
 		swapChainImageFormat, device);
-
-	pipeline.LoadShaders(device, swapChainExtent, "shaders/vert.spv", "shaders/frag.spv");
+	pipeline.CreateRenderPass(device, swapChainImageFormat);
+	pipeline.CreateGraphicsPipeline(device, swapChainExtent, 
+		"shaders/vert.spv", "shaders/frag.spv");
 }
 
 void imApplication::Cleanup() {
 	// Vulkan
-	if (VALIDATION_LAYERS_ENABLED) {
-		VKDebug::DestroyDebugReportCallbackEXT(instance, callback, nullptr);
-	}
+	
+	pipeline.Cleanup(device);
 
 	for (size_t i = 0; i < swapChainImageViews.size(); i++) {
 		vkDestroyImageView(device, swapChainImageViews[i], nullptr);
+	}
+	
+	if (VALIDATION_LAYERS_ENABLED) {
+		VKDebug::DestroyDebugReportCallbackEXT(instance, callback, nullptr);
 	}
 
 	vkDestroySwapchainKHR(device, swapChain, nullptr);
