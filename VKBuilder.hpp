@@ -298,6 +298,108 @@ public:
 		} 
 	}
 
+	static void CreateFrameBuffers(VkDevice &device,
+			std::vector<VkFramebuffer> &frameBuffers,
+			std::vector<VkImageView> &imageViews,
+			VkRenderPass &renderPass, VkExtent2D extent) {
+
+		frameBuffers.resize(imageViews.size());
+		for (size_t i = 0; i < imageViews.size(); i++) {
+			// We only have a color attachment, but we could
+			// also include a depth attachment here.
+			VkImageView attachments[] = {
+				imageViews[i]
+			};
+
+			VkFramebufferCreateInfo fbInfo = { };
+			fbInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			fbInfo.renderPass = renderPass;
+			fbInfo.attachmentCount = 1;
+			fbInfo.pAttachments = attachments;
+			fbInfo.width = extent.width;
+			fbInfo.height = extent.height;
+			fbInfo.layers = 1;
+
+			if (vkCreateFramebuffer(device, &fbInfo, nullptr, &frameBuffers[i]) 
+					!= VK_SUCCESS) {
+				throw std::runtime_error("Failed to create frame buffer!");
+			}
+		}
+	}
+
+	static void CreateCommandPoool(
+			VkDevice &device,
+			VkPhysicalDevice &pDevice, VkSurfaceKHR &surface,
+			VkCommandPool &pool) {
+		QueueFamilyIndices queueFamilyIndices = FindQueueFamilies(pDevice, surface);
+		VkCommandPoolCreateInfo poolInfo = { };
+
+		poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+		// Command pool can only submit to one queue, we'll be submitting
+		// graphics calls.
+		poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily;
+		poolInfo.flags = 0; // Optional
+
+		if (vkCreateCommandPool(device, &poolInfo, nullptr, &pool) != VK_SUCCESS) {
+			throw std::runtime_error("Failed to create command pool!");
+		}
+	}
+
+	static void CreateCommandBuffers(VkDevice &device, VkCommandPool &commandPool,
+			VkRenderPass &renderPass, VkExtent2D extent, VkPipeline pipeline,
+			std::vector<VkCommandBuffer> &commandBuffers,
+			std::vector<VkFramebuffer> &frameBuffers) {
+
+		commandBuffers.resize(frameBuffers.size());
+
+		VkCommandBufferAllocateInfo allocInfo = { };
+		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		allocInfo.commandPool = commandPool;
+		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
+
+		if (vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data()) 
+				!= VK_SUCCESS) {
+			throw std::runtime_error("Failed to create command buffers!");
+		}
+
+		for (size_t i = 0; i < commandBuffers.size(); i++) {
+			VkCommandBufferBeginInfo beginInfo = { };
+			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+			beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+			beginInfo.pInheritanceInfo = nullptr; // Optional
+
+			// Begin recording to the command buffer (implicitly reset buffer).
+			vkBeginCommandBuffer(commandBuffers[i], &beginInfo);
+
+			VkRenderPassBeginInfo renderPassInfo = { };
+			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+			renderPassInfo.renderPass = renderPass;
+			renderPassInfo.framebuffer = frameBuffers[i];
+			renderPassInfo.renderArea.offset = { 0, 0 };
+			renderPassInfo.renderArea.extent = extent;
+			VkClearValue clearColor = { 0.05f, 0.05f, 0.1f, 1.0f };
+			renderPassInfo.clearValueCount = 1;
+			renderPassInfo.pClearValues = &clearColor;
+
+			// Begin the render pass, can now submit drawing commands.
+			vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, 
+				VK_SUBPASS_CONTENTS_INLINE);
+
+			vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS,
+				pipeline);
+			vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
+
+			// End the render pass, stop submitting draw commands.
+			vkCmdEndRenderPass(commandBuffers[i]);
+
+			// Stop recording to the command buffer.
+			if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
+				throw std::runtime_error("Failed to record command buffer!");
+			}
+		}
+	}
+
 private:
 	VKBuilder() { }
 };

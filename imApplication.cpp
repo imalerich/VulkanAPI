@@ -15,7 +15,12 @@ imApplication::~imApplication() {
 void imApplication::Run() {
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
+		DrawFrame();
 	}
+}
+
+void imApplication::DrawFrame() {
+	// TODO
 }
 
 void imApplication::InitGLFW(size_t screen_w, size_t screen_h, const char * app_name) {
@@ -42,10 +47,22 @@ void imApplication::InitVulkan() {
 	pipeline.CreateRenderPass(device, swapChainImageFormat);
 	pipeline.CreateGraphicsPipeline(device, swapChainExtent, 
 		"shaders/vert.spv", "shaders/frag.spv");
+	VKBuilder::CreateFrameBuffers(device, swapChainFrameBuffers, swapChainImageViews,
+		pipeline.renderPass, swapChainExtent);
+	VKBuilder::CreateCommandPoool(device, physicalDevice, surface, commandPool);
+	VKBuilder::CreateCommandBuffers(device, commandPool, pipeline.renderPass,
+		swapChainExtent, pipeline.graphicsPipeline, commandBuffers, 
+		swapChainFrameBuffers);
 }
 
 void imApplication::Cleanup() {
 	// Vulkan
+	
+	vkDestroyCommandPool(device, commandPool, nullptr);
+	
+	for (size_t i = 0; i < swapChainFrameBuffers.size(); i++) {
+		vkDestroyFramebuffer(device, swapChainFrameBuffers[i], nullptr);
+	}
 	
 	pipeline.Cleanup(device);
 

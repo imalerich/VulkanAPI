@@ -38,6 +38,7 @@ public:
 private:
 	void InitGLFW(size_t screen_w, size_t screen_h, const char * app_name);
 	void InitVulkan();
+	void DrawFrame();
 	void Cleanup();
 
 	/// Reference to the main application window created by GLFW.
@@ -67,6 +68,8 @@ private:
 	/// This relationship is similar to the idea of having both a physical
 	/// device and a logical device to interface with that physical device.
 	std::vector<VkImageView> swapChainImageViews;
+	/// Encapsulates all image views (color, depth, etc) to be drawn to.
+	std::vector<VkFramebuffer> swapChainFrameBuffers;
 
 	/// Image format that was used to create the swap chain, useful to keep around.
 	VkFormat swapChainImageFormat;
@@ -75,6 +78,11 @@ private:
 
 	/// Will hold a basic configuration for our graphics pipeline.
 	VKPipeline pipeline;
+
+	/// Manages the memory of allocated command buffers.
+	VkCommandPool commandPool;
+	/// We need one command buffer for each framebuffer in the swap chain.
+	std::vector<VkCommandBuffer> commandBuffers;
 
 	/// Handle to validation layers debug callback.
 	VkDebugReportCallbackEXT callback;
