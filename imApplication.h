@@ -38,6 +38,9 @@ public:
 private:
 	void InitGLFW(size_t screen_w, size_t screen_h, const char * app_name);
 	void InitVulkan();
+	void InitSemaphores();
+
+	void Update();
 	void DrawFrame();
 	void Cleanup();
 
@@ -83,6 +86,11 @@ private:
 	VkCommandPool commandPool;
 	/// We need one command buffer for each framebuffer in the swap chain.
 	std::vector<VkCommandBuffer> commandBuffers;
+
+	/// Holds rendering until an image is ready to render to.
+	VkSemaphore imageAvailableSemaphore;
+	/// Holds presentation until we are finished rendering.
+	VkSemaphore renderFinishedSemaphore;
 
 	/// Handle to validation layers debug callback.
 	VkDebugReportCallbackEXT callback;
