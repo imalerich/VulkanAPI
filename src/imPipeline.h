@@ -1,22 +1,17 @@
-#ifndef PIPELINE_H
-#define PIPELINE_H
+#ifndef IM_PIPELINE_H
+#define IM_PIPELINE_H
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <vector>
+#include "PREFIX.h"
+#include "imVulkan.h"
 
 static std::vector<char> ReadFile(const std::string &filename);
 
-class VKPipeline {
+class imPipeline {
 public:
-	void CreateGraphicsPipeline(VkDevice &device, VkExtent2D extent,
+	void CreateGraphicsPipeline(VkExtent2D extent,
 		std::string vertexFile, std::string fragFile);
-	void CreateRenderPass(VkDevice &device, VkFormat format);
-	void Cleanup(VkDevice &device);
+	void CreateRenderPass(VkFormat format);
+	void Cleanup();
 
 	/// Describes a particular configuration of the graphics pipeline,
 	/// holding all saders, fixed function states, render passes, etc.
@@ -27,7 +22,7 @@ public:
 	VkPipelineLayout pipelineLayout;
 
 private:
-	VkShaderModule CreateShaderModule(VkDevice &device, const std::vector<char> &code);
+	VkShaderModule CreateShaderModule(const std::vector<char> &code);
 
 };
 

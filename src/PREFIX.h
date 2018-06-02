@@ -5,6 +5,19 @@
 #define SCREENH 600
 #define APP_NAME "Vulkan Demo"
 
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
+
+#include <functional>
+#include <stdexcept>
+#include <iostream>
+#include <fstream>
+#include <cstring>
+#include <string>
+#include <limits>
+#include <vector>
+#include <set>
+
 #ifdef NDEBUG
 	const bool VALIDATION_LAYERS_ENABLED = false;
 #else
@@ -17,21 +30,6 @@ const std::vector<const char *> VALIDATION_LAYERS = {
 
 const std::vector<const char *> DEVICE_EXTENSIONS = {
 	VK_KHR_SWAPCHAIN_EXTENSION_NAME
-};
-
-struct SwapChainSupportDetails {
-	VkSurfaceCapabilitiesKHR capabilities;
-	std::vector<VkSurfaceFormatKHR> formats;
-	std::vector<VkPresentModeKHR> presentModes;
-};
-
-struct QueueFamilyIndices {
-	int graphicsFamily = -1;
-	int presentFamily = -1;
-
-	bool IsComplete() {
-		return (graphicsFamily >= 0) && (presentFamily >= 0);
-	}
 };
 
 #endif

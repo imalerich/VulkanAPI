@@ -1,9 +1,11 @@
 #ifndef VK_DEBUG_HPP
 #define VK_DEBUG_HPP
 
+#include "imVulkan.h"
+
 class VKDebug {
 public:
-	static void SetupDebugCallback(VkInstance instance, VkDebugReportCallbackEXT &callback) {
+	static void SetupDebugCallback(VkDebugReportCallbackEXT &callback) {
 		if (!VALIDATION_LAYERS_ENABLED) { return; }
 
 		VkDebugReportCallbackCreateInfoEXT createInfo = { };
@@ -17,9 +19,9 @@ public:
 		}
 	}
 
-	static void DestroyDebugReportCallbackEXT(VkInstance instance, 
-			VkDebugReportCallbackEXT &callback, 
-			const VkAllocationCallbacks * pAllocator) {
+	static void DestroyDebugReportCallbackEXT(
+			VkDebugReportCallbackEXT &callback, const VkAllocationCallbacks * pAllocator) {
+
 		auto func = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(instance,
 				"vkDestroyDebugReportCallbackEXT");
 		if (func != nullptr) {

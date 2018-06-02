@@ -1,15 +1,27 @@
 CFLAGS = -std=c++11 -g
 LIBFLAGS = `pkg-config --static --libs glfw3` -lvulkan
-OBJ = imApplication.o VKPipeline.o
+OBJ = imApplication.o imPipeline.o imSwapChain.o imVulkan.o
 
-VulkanDemo: main.cpp glsl imApplication.o PREFIX.h
-	g++ $(CFLAGS) -o VulkanDemo main.cpp $(OBJ) $(LIBFLAGS)
+VulkanDemo: src/main.cpp glsl imApplication.o
+	g++ $(CFLAGS) -o VulkanDemo src/main.cpp $(OBJ) $(LIBFLAGS)
 
-imApplication.o: imApplication.h imApplication.cpp VKBuilder.hpp VKDebug.hpp VKSurfaceBuilder.hpp PREFIX.h VKPipeline.o
-	g++ $(CFLAGS) -c imApplication.cpp
+APPDEPS = imPipeline.o imSwapChain.o imVulkan.o src/VKBuilder.hpp src/VKDebug.hpp
+imApplication.o: src/imApplication.h src/imApplication.cpp $(APPDEPS)
+	g++ $(CFLAGS) -c src/imApplication.cpp
 
-VKPipeline.o: VKPipeline.h VKPipeline.cpp
-	g++ $(CFLAGS) -c VKPipeline.cpp
+# Utility classes which encapsulate Vulkan data.
+
+imPipeline.o: src/imPipeline.h src/imPipeline.cpp imVulkan.o
+	g++ $(CFLAGS) -c src/imPipeline.cpp
+
+imSwapChain.o: src/imSwapChain.h src/imSwapChain.cpp imVulkan.o
+	g++ $(CFLAGS) -c src/imSwapChain.cpp
+
+# Base dependency, everything depends on this.
+# Declares global Vulkan constants.
+
+imVulkan.o: src/imVulkan.h src/imVulkan.cpp src/PREFIX.h
+	g++ $(CFLAGS) -c src/imVulkan.cpp
 
 run: VulkanDemo
 	./VulkanDemo

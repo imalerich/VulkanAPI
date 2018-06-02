@@ -1,7 +1,5 @@
 #include "imApplication.h"
-
 #include "VKBuilder.hpp"
-#include "VKSurfaceBuilder.hpp"
 
 imApplication::imApplication(size_t screen_w, size_t screen_h, const char * app_name) {
 	InitGLFW(screen_w, screen_h, app_name);
@@ -32,7 +30,8 @@ void imApplication::Update() {
 
 void imApplication::DrawFrame() {
 	uint32_t imageIndex;
-	vkAcquireNextImageKHR(device, swapChain, std::numeric_limits<uint64_t>::max(),
+	vkAcquireNextImageKHR(device, swapchain.swapChain, 
+		std::numeric_limits<uint64_t>::max(),
 		imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
 
 	VkSubmitInfo submitInfo = { };
@@ -68,7 +67,7 @@ void imApplication::DrawFrame() {
 	presentInfo.waitSemaphoreCount = 1;
 	presentInfo.pWaitSemaphores = signalSemaphores;
 
-	VkSwapchainKHR swapChains[] = { swapChain };
+	VkSwapchainKHR swapChains[] = { swapchain.swapChain };
 	presentInfo.swapchainCount = 1;
 	presentInfo.pSwapchains = swapChains;
 	presentInfo.pImageIndices = &imageIndex;
@@ -86,27 +85,25 @@ void imApplication::InitGLFW(size_t screen_w, size_t screen_h, const char * app_
 }
 
 void imApplication::InitVulkan() {
-	VKBuilder::CreateInstance(instance);
+	// Initial Setup - Create instance, debug, and select/create devices.
+	VKBuilder::CreateInstance();
 	VKBuilder::PrintSupportedExtensions();
-	VKBuilder::CreateSurface(instance, window, surface);
-	VKDebug::SetupDebugCallback(instance, callback);
-	VKBuilder::SelectPhysicalDevice(instance, surface, physicalDevice);
-	VKBuilder::CreateLogicalDevice(physicalDevice, surface, 
-		device, graphicsQueue, presentQueue);
-	VKSurfaceBuilder::CreateSwapChain(physicalDevice, device, surface, 
-		swapChain, VKBuilder::FindQueueFamilies(physicalDevice, surface),
-		swapChainImages, swapChainImageFormat, swapChainExtent);
-	VKBuilder::CreateImageViews(swapChainImages, swapChainImageViews, 
-		swapChainImageFormat, device);
-	pipeline.CreateRenderPass(device, swapChainImageFormat);
-	pipeline.CreateGraphicsPipeline(device, swapChainExtent, 
+	VKBuilder::CreateSurface();
+	VKDebug::SetupDebugCallback(callback);
+	VKBuilder::SelectPhysicalDevice();
+	VKBuilder::CreateLogicalDevice(graphicsQueue, presentQueue);
+
+	// Setup the swap chain and graphics pipeline.
+	swapchain.CreateSwapChain();
+	swapchain.CreateImageViews();
+	pipeline.CreateRenderPass(swapchain.imageFormat);
+	pipeline.CreateGraphicsPipeline(swapchain.extent, 
 		"shaders/vert.spv", "shaders/frag.spv");
-	VKBuilder::CreateFrameBuffers(device, swapChainFrameBuffers, swapChainImageViews,
-		pipeline.renderPass, swapChainExtent);
-	VKBuilder::CreateCommandPoool(device, physicalDevice, surface, commandPool);
-	VKBuilder::CreateCommandBuffers(device, commandPool, pipeline.renderPass,
-		swapChainExtent, pipeline.graphicsPipeline, commandBuffers, 
-		swapChainFrameBuffers);
+	swapchain.CreateFrameBuffers(pipeline.renderPass);
+
+	// Create the command buffers for submitting commands.
+	VKBuilder::CreateCommandPoool(commandPool);
+	VKBuilder::CreateCommandBuffers(commandPool, pipeline, swapchain, commandBuffers);
 	InitSemaphores();
 }
 
@@ -129,21 +126,13 @@ void imApplication::Cleanup() {
 	vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
 	vkDestroyCommandPool(device, commandPool, nullptr);
 	
-	for (size_t i = 0; i < swapChainFrameBuffers.size(); i++) {
-		vkDestroyFramebuffer(device, swapChainFrameBuffers[i], nullptr);
-	}
-	
-	pipeline.Cleanup(device);
-
-	for (size_t i = 0; i < swapChainImageViews.size(); i++) {
-		vkDestroyImageView(device, swapChainImageViews[i], nullptr);
-	}
+	pipeline.Cleanup();
+	swapchain.Cleanup();
 	
 	if (VALIDATION_LAYERS_ENABLED) {
-		VKDebug::DestroyDebugReportCallbackEXT(instance, callback, nullptr);
+		VKDebug::DestroyDebugReportCallbackEXT(callback, nullptr);
 	}
 
-	vkDestroySwapchainKHR(device, swapChain, nullptr);
 	vkDestroyDevice(device, nullptr);
 	vkDestroySurfaceKHR(instance, surface, nullptr);
 	vkDestroyInstance(instance, nullptr);

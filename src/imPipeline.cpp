@@ -1,4 +1,4 @@
-#include "VKPipeline.h"
+#include "imPipeline.h"
 
 static std::vector<char> ReadFile(const std::string &filename) {
 	// Start at the end of the file, we can immediately judge the size.
@@ -20,7 +20,7 @@ static std::vector<char> ReadFile(const std::string &filename) {
 	return buffer;
 }
 
-void VKPipeline::CreateGraphicsPipeline(VkDevice &device, VkExtent2D extent,
+void imPipeline::CreateGraphicsPipeline(VkExtent2D extent,
 		std::string vertexFile, std::string fragFile) {
 	auto vertCode = ReadFile(vertexFile);
 	auto fragCode = ReadFile(fragFile);
@@ -35,8 +35,8 @@ void VKPipeline::CreateGraphicsPipeline(VkDevice &device, VkExtent2D extent,
 	VkShaderModule vertModule;
 	VkShaderModule fragModule;
 
-	vertModule = CreateShaderModule(device, vertCode);
-	fragModule = CreateShaderModule(device, fragCode);
+	vertModule = CreateShaderModule(vertCode);
+	fragModule = CreateShaderModule(fragCode);
 
 	// Create info for the vertex shader stage.
 	VkPipelineShaderStageCreateInfo vertShaderStageInfo = { };
@@ -207,7 +207,7 @@ void VKPipeline::CreateGraphicsPipeline(VkDevice &device, VkExtent2D extent,
 	vkDestroyShaderModule(device, vertModule, nullptr);
 }
 
-void VKPipeline::CreateRenderPass(VkDevice &device, VkFormat format) {
+void imPipeline::CreateRenderPass(VkFormat format) {
 	VkSubpassDependency dependency = { };
 	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
 	dependency.dstSubpass = 0;
@@ -255,8 +255,7 @@ void VKPipeline::CreateRenderPass(VkDevice &device, VkFormat format) {
 	}
 }
 
-VkShaderModule VKPipeline::CreateShaderModule(VkDevice &device, 
-		const std::vector<char> &code) {
+VkShaderModule imPipeline::CreateShaderModule(const std::vector<char> &code) {
 	VkShaderModuleCreateInfo createInfo = { };
 	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 	createInfo.codeSize = code.size();
@@ -270,7 +269,7 @@ VkShaderModule VKPipeline::CreateShaderModule(VkDevice &device,
 	return shaderModule;
 }
 
-void VKPipeline::Cleanup(VkDevice &device) {
+void imPipeline::Cleanup() {
 	vkDestroyPipeline(device, graphicsPipeline, nullptr);
 	vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
 	vkDestroyRenderPass(device, renderPass, nullptr);
