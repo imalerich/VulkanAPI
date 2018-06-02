@@ -30,9 +30,17 @@ void imApplication::Update() {
 
 void imApplication::DrawFrame() {
 	uint32_t imageIndex;
-	vkAcquireNextImageKHR(device, swapchain.swapChain, 
+	VkResult result = vkAcquireNextImageKHR(device, swapchain.swapChain, 
 		std::numeric_limits<uint64_t>::max(),
 		imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+
+	// Check if Vulkan thiks we need to recreate our swap chain.
+	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+		RecreateSwapChain();
+		return;
+	} else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+		throw std::runtime_error("Failed to acquire swap chain image!");
+	}
 
 	VkSubmitInfo submitInfo = { };
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -73,15 +81,22 @@ void imApplication::DrawFrame() {
 	presentInfo.pImageIndices = &imageIndex;
 	presentInfo.pResults = nullptr; // Optional
 
-	vkQueuePresentKHR(presentQueue, &presentInfo);
+	result = vkQueuePresentKHR(presentQueue, &presentInfo);
+
+	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+		RecreateSwapChain();
+	} else if (result != VK_SUCCESS) {
+		throw std::runtime_error("Failed to present swap chain image!");
+	}
 }
 
 void imApplication::InitGLFW(size_t screen_w, size_t screen_h, const char * app_name) {
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-
 	window = glfwCreateWindow(screen_w, screen_h, app_name, nullptr, nullptr);
+
+	glfwSetWindowUserPointer(window, this);
+	glfwSetWindowSizeCallback(window, imApplication::OnWindowResized);
 }
 
 void imApplication::InitVulkan() {
@@ -107,6 +122,29 @@ void imApplication::InitVulkan() {
 	InitSemaphores();
 }
 
+void imApplication::CleanupSwapChain() {
+	vkFreeCommandBuffers(device, commandPool, 
+		static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
+	pipeline.Cleanup();
+	swapchain.Cleanup();
+}
+
+void imApplication::RecreateSwapChain() {
+	vkDeviceWaitIdle(device);
+
+	std::cout << "Recreating Swap Chain" << std::endl;
+	std::cout << "-----------------------------------------------" << std::endl;
+	CleanupSwapChain();
+
+	swapchain.CreateSwapChain();
+	swapchain.CreateImageViews();
+	pipeline.CreateRenderPass(swapchain.imageFormat);
+	pipeline.CreateGraphicsPipeline(swapchain.extent, 
+		"shaders/vert.spv", "shaders/frag.spv");
+	swapchain.CreateFrameBuffers(pipeline.renderPass);
+	VKBuilder::CreateCommandBuffers(commandPool, pipeline, swapchain, commandBuffers);
+}
+
 void imApplication::InitSemaphores() {
 	VkSemaphoreCreateInfo semaphoreInfo = { };
 	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -122,12 +160,11 @@ void imApplication::InitSemaphores() {
 void imApplication::Cleanup() {
 	// Vulkan
 	
+	CleanupSwapChain();
+	
 	vkDestroySemaphore(device, renderFinishedSemaphore, nullptr);
 	vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
 	vkDestroyCommandPool(device, commandPool, nullptr);
-	
-	pipeline.Cleanup();
-	swapchain.Cleanup();
 	
 	if (VALIDATION_LAYERS_ENABLED) {
 		VKDebug::DestroyDebugReportCallbackEXT(callback, nullptr);
@@ -140,4 +177,16 @@ void imApplication::Cleanup() {
 	// GLFW
 	glfwDestroyWindow(window);
 	glfwTerminate();
+}
+
+void imApplication::OnWindowResized(GLFWwindow * window, int width, int height) {
+	if (window == 0 || height == 0) { return; }
+
+	// Update our global constants for the screen size.
+	SCREENH = width;
+	SCREENW = width;
+
+	imApplication * app = reinterpret_cast<imApplication *>(
+		glfwGetWindowUserPointer(window));
+	app->RecreateSwapChain();
 }

@@ -3,6 +3,9 @@
 
 #include "PREFIX.h"
 
+extern uint32_t SCREENW;
+extern uint32_t SCREENH;
+
 /// Reference to the main application window created by GLFW.
 extern GLFWwindow * window;
 /// Vulkan (extension) handle to the representation of the GLFW created window.

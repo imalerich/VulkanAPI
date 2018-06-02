@@ -1,5 +1,8 @@
 #include "imVulkan.h"
 
+uint32_t SCREENW = 800;
+uint32_t SCREENH = 600;
+
 GLFWwindow * window = nullptr;
 VkSurfaceKHR surface = nullptr;
 

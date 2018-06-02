@@ -30,6 +30,11 @@ private:
 	void InitVulkan();
 	void InitSemaphores();
 
+	void CleanupSwapChain();
+	void RecreateSwapChain();
+
+	static void OnWindowResized(GLFWwindow * window, int width, int height);
+
 	void Update();
 	void DrawFrame();
 	void Cleanup();
