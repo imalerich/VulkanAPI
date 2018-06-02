@@ -11,7 +11,7 @@ imApplication.o: src/imApplication.h src/imApplication.cpp $(APPDEPS)
 
 # Utility classes which encapsulate Vulkan data.
 
-imPipeline.o: src/imPipeline.h src/imPipeline.cpp imVulkan.o
+imPipeline.o: src/imPipeline.h src/imPipeline.cpp src/imVertex.hpp imVulkan.o
 	g++ $(CFLAGS) -c src/imPipeline.cpp
 
 imSwapChain.o: src/imSwapChain.h src/imSwapChain.cpp imVulkan.o

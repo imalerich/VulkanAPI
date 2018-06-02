@@ -1,4 +1,5 @@
 #include "imPipeline.h"
+#include "imVertex.hpp"
 
 static std::vector<char> ReadFile(const std::string &filename) {
 	// Start at the end of the file, we can immediately judge the size.
@@ -58,12 +59,17 @@ void imPipeline::CreateGraphicsPipeline(VkExtent2D extent,
 
 	// We have all the programmable stages set up, now we only need to set
 	// up the fixed function stages of the pipeline.
+	auto bindingDesc = imVertex::GetBindingDescription();
+	auto attrDesc = imVertex::GetAttrDescription();
+
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo = { };
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	vertexInputInfo.vertexBindingDescriptionCount = 0;
-	vertexInputInfo.pVertexBindingDescriptions = nullptr; // Optional
-	vertexInputInfo.vertexAttributeDescriptionCount = 0;
-	vertexInputInfo.pVertexAttributeDescriptions = nullptr; // Optional
+	vertexInputInfo.vertexBindingDescriptionCount = 1;
+	vertexInputInfo.vertexAttributeDescriptionCount = 
+		static_cast<uint32_t>(attrDesc.size());
+
+	vertexInputInfo.pVertexBindingDescriptions = &bindingDesc;
+	vertexInputInfo.pVertexAttributeDescriptions = attrDesc.data();
 
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly = { };
 	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
