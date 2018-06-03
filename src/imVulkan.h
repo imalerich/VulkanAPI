@@ -20,6 +20,14 @@ extern VkInstance instance;
 extern VkPhysicalDevice physicalDevice;
 /// Logical device created from our selected physical device.
 extern VkDevice device;
+/// Manages the memory of allocated command buffers.
+extern VkCommandPool commandPool;
+
+/// Handle to the graphics queue for sending graphics command pools.
+extern VkQueue graphicsQueue;
+/// Handle to the presentation queue for presenting to the GLFW window.
+extern VkQueue presentQueue;
+
 
 /// Stores supported swap chain details for a given physical device.
 struct SwapChainSupportDetails {
@@ -44,13 +52,5 @@ QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice &pDevice, VkSurfaceKHR &su
 
 /// Query swap chain support for the given physical device.
 SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice &pDevice);
-
-/// Find a memory type that fits the input needs for our physical device.
-uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
-
-/// Create a new buffer on the GPU using the given ubuffer usage and memory properties.
-void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, 
-		VkMemoryPropertyFlags properties, 
-		VkBuffer &buffer, VkDeviceMemory &bufferMemory);
 
 #endif

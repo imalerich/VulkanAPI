@@ -41,11 +41,6 @@ private:
 	void DrawFrame();
 	void Cleanup();
 
-	/// Handle to the graphics queue for sending graphics command pools.
-	VkQueue graphicsQueue = VK_NULL_HANDLE;
-	/// Handle to the presentation queue for presenting to the GLFW window.
-	VkQueue presentQueue = VK_NULL_HANDLE;
-
 	/// Will hold a basic configuration for our graphics pipeline.
 	imPipeline pipeline;
 	/// Will hold a basic configuratio for our swap chain.
@@ -54,8 +49,6 @@ private:
 	/// Stores mesh data we wish to render.
 	imMesh mesh;
 
-	/// Manages the memory of allocated command buffers.
-	VkCommandPool commandPool;
 	/// We need one command buffer for each framebuffer in the swap chain.
 	std::vector<VkCommandBuffer> commandBuffers;
 

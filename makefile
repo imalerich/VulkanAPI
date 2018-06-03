@@ -17,7 +17,7 @@ imPipeline.o: src/imPipeline.h src/imPipeline.cpp src/imVertex.hpp imVulkan.o
 imSwapChain.o: src/imSwapChain.h src/imSwapChain.cpp imVulkan.o
 	g++ $(CFLAGS) -c src/imSwapChain.cpp
 
-imMesh.o: src/imMesh.h src/imMesh.cpp imVulkan.o src/imVertex.hpp
+imMesh.o: src/imMesh.h src/imMesh.cpp imVulkan.o src/imVertex.hpp src/imBuffer.hpp
 	g++ $(CFLAGS) -c src/imMesh.cpp
 
 # Base dependency, everything depends on this.
