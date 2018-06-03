@@ -4,6 +4,8 @@
 #include "PREFIX.h"
 #include "imVulkan.h"
 #include "VKDebug.hpp"
+
+#include "imMesh.h"
 #include "imPipeline.h"
 #include "imSwapChain.h"
 
@@ -243,7 +245,7 @@ public:
 	}
 
 	static void CreateCommandBuffers(VkCommandPool &commandPool,
-			imPipeline &pipeline, imSwapChain &swapchain,
+			imPipeline &pipeline, imSwapChain &swapchain, imMesh &mesh,
 			std::vector<VkCommandBuffer> &commandBuffers) {
 
 		commandBuffers.resize(swapchain.frameBuffers.size());
@@ -284,7 +286,13 @@ public:
 
 			vkCmdBindPipeline(commandBuffers[i], 
 				VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.graphicsPipeline);
-			vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
+
+			// Bind the vertex buffer for rendering.
+			VkBuffer vertexBuffers[] = { mesh.vertexBuffer };
+			VkDeviceSize offsets[] = { 0 };
+			vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
+
+			vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(VERTICES.size()), 1, 0, 0);
 
 			// End the render pass, stop submitting draw commands.
 			vkCmdEndRenderPass(commandBuffers[i]);

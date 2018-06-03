@@ -3,6 +3,8 @@
 
 #include "PREFIX.h"
 #include "imVulkan.h"
+
+#include "imMesh.h"
 #include "imPipeline.h"
 #include "imSwapChain.h"
 
@@ -48,6 +50,9 @@ private:
 	imPipeline pipeline;
 	/// Will hold a basic configuratio for our swap chain.
 	imSwapChain swapchain;
+
+	/// Stores mesh data we wish to render.
+	imMesh mesh;
 
 	/// Manages the memory of allocated command buffers.
 	VkCommandPool commandPool;

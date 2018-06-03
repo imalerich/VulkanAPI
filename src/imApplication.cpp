@@ -118,7 +118,9 @@ void imApplication::InitVulkan() {
 
 	// Create the command buffers for submitting commands.
 	VKBuilder::CreateCommandPoool(commandPool);
-	VKBuilder::CreateCommandBuffers(commandPool, pipeline, swapchain, commandBuffers);
+	mesh.CreateVertexBuffer();
+	VKBuilder::CreateCommandBuffers(commandPool, pipeline, 
+		swapchain, mesh, commandBuffers);
 	InitSemaphores();
 }
 
@@ -142,7 +144,8 @@ void imApplication::RecreateSwapChain() {
 	pipeline.CreateGraphicsPipeline(swapchain.extent, 
 		"shaders/vert.spv", "shaders/frag.spv");
 	swapchain.CreateFrameBuffers(pipeline.renderPass);
-	VKBuilder::CreateCommandBuffers(commandPool, pipeline, swapchain, commandBuffers);
+	VKBuilder::CreateCommandBuffers(commandPool, pipeline, 
+		swapchain, mesh, commandBuffers);
 }
 
 void imApplication::InitSemaphores() {
@@ -161,6 +164,7 @@ void imApplication::Cleanup() {
 	// Vulkan
 	
 	CleanupSwapChain();
+	mesh.Cleanup();
 	
 	vkDestroySemaphore(device, renderFinishedSemaphore, nullptr);
 	vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);

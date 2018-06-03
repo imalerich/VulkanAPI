@@ -1,3 +1,6 @@
+#ifndef IM_VERTEX_HPP
+#define IM_VERTEX_HPP
+
 #include "imVulkan.h"
 
 #include <cstddef>
@@ -36,8 +39,10 @@ public:
 };
 
 /// Temporary constant array of vertices for testing.
-const std::vector<imVertex> vertices = {
-	{{0.0f, -0.5f},	{1.0f, 0.0f, 0.0f}},
-	{{0.5f,  0.5f},	{0.0f, 1.0f, 0.0f}},
-	{{-0.5f, 0.5f},	{0.0f, 0.0f, 1.0f}}
+const std::vector<imVertex> VERTICES = {
+	{{0.0f, -0.5f},	{1.0f, 0.2f, 1.0f}},
+	{{0.5f,  0.5f},	{0.0f, 1.0f, 0.5f}},
+	{{-0.5f, 0.5f},	{0.1f, 0.6f, 1.0f}}
 };
+
+#endif
