@@ -45,4 +45,12 @@ QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice &pDevice, VkSurfaceKHR &su
 /// Query swap chain support for the given physical device.
 SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice &pDevice);
 
+/// Find a memory type that fits the input needs for our physical device.
+uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
+/// Create a new buffer on the GPU using the given ubuffer usage and memory properties.
+void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, 
+		VkMemoryPropertyFlags properties, 
+		VkBuffer &buffer, VkDeviceMemory &bufferMemory);
+
 #endif

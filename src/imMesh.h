@@ -4,8 +4,6 @@
 #include "imVulkan.h"
 #include "imVertex.hpp"
 
-uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
-
 class imMesh {
 public:
 	void CreateVertexBuffer();
