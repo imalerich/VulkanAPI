@@ -40,9 +40,14 @@ public:
 
 /// Temporary constant array of vertices for testing.
 const std::vector<imVertex> VERTICES = {
-	{{0.0f, -0.5f},	{1.0f, 0.2f, 1.0f}},
-	{{0.5f,  0.5f},	{0.0f, 1.0f, 0.5f}},
-	{{-0.5f, 0.5f},	{0.1f, 0.6f, 1.0f}}
+	{{-0.5f, -0.5f},	{1.0f, 0.2f, 0.0f}},
+	{{ 0.5f, -0.5f},	{0.0f, 0.4f, 0.6f}},
+	{{ 0.5f,  0.5f},	{0.0f, 1.0f, 1.0f}},
+	{{-0.5f,  0.5f},	{0.2f, 0.1f, 0.5f}},
+};
+
+const std::vector<uint16_t> INDICES = {
+	0, 1, 2, 2, 3, 0
 };
 
 #endif

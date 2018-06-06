@@ -291,8 +291,10 @@ public:
 			VkBuffer vertexBuffers[] = { mesh.vertexBuffer };
 			VkDeviceSize offsets[] = { 0 };
 			vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
+			vkCmdBindIndexBuffer(commandBuffers[i], mesh.indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 
-			vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(VERTICES.size()), 1, 0, 0);
+			vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(INDICES.size()),
+				1, 0, 0, 0);
 
 			// End the render pass, stop submitting draw commands.
 			vkCmdEndRenderPass(commandBuffers[i]);

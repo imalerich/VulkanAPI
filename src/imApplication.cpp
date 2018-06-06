@@ -118,7 +118,7 @@ void imApplication::InitVulkan() {
 
 	// Create the command buffers for submitting commands.
 	VKBuilder::CreateCommandPoool(commandPool);
-	mesh.CreateVertexBuffer();
+	mesh.Create();
 	VKBuilder::CreateCommandBuffers(commandPool, pipeline, 
 		swapchain, mesh, commandBuffers);
 	InitSemaphores();

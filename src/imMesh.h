@@ -6,13 +6,17 @@
 
 class imMesh {
 public:
+	void Create();
 	void CreateVertexBuffer();
+	void CreateIndexBuffer();
 	void Cleanup();
 
 	VkBuffer vertexBuffer;
+	VkBuffer indexBuffer;
 
 private:
 	VkDeviceMemory vertexBufferMemory;
+	VkDeviceMemory indexBufferMemory;
 };
 
 #endif
