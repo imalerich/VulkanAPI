@@ -1,11 +1,11 @@
 CFLAGS = -std=c++11 -g
 LIBFLAGS = `pkg-config --static --libs glfw3` -lvulkan
-OBJ = imApplication.o imPipeline.o imSwapChain.o imVulkan.o imMesh.o
+OBJ = imApplication.o imPipeline.o imSwapChain.o imVulkan.o imMesh.o imBuffer.o
 
 VulkanDemo: src/main.cpp glsl imApplication.o
 	g++ $(CFLAGS) -o VulkanDemo src/main.cpp $(OBJ) $(LIBFLAGS)
 
-APPDEPS = imPipeline.o imSwapChain.o imVulkan.o imMesh.o src/VKBuilder.hpp src/VKDebug.hpp
+APPDEPS = imPipeline.o imSwapChain.o imVulkan.o imMesh.o imBuffer.o src/VKBuilder.hpp src/VKDebug.hpp
 imApplication.o: src/imApplication.h src/imApplication.cpp $(APPDEPS)
 	g++ $(CFLAGS) -c src/imApplication.cpp
 
@@ -17,8 +17,11 @@ imPipeline.o: src/imPipeline.h src/imPipeline.cpp src/imVertex.hpp imVulkan.o
 imSwapChain.o: src/imSwapChain.h src/imSwapChain.cpp imVulkan.o
 	g++ $(CFLAGS) -c src/imSwapChain.cpp
 
-imMesh.o: src/imMesh.h src/imMesh.cpp imVulkan.o src/imVertex.hpp src/imBuffer.hpp
+imMesh.o: src/imMesh.h src/imMesh.cpp imVulkan.o src/imVertex.hpp imBuffer.o
 	g++ $(CFLAGS) -c src/imMesh.cpp
+
+imBuffer.o: src/imBuffer.h src/imBuffer.cpp imVulkan.o
+	g++ $(CFLAGS) -c src/imBuffer.cpp
 
 # Base dependency, everything depends on this.
 # Declares global Vulkan constants.

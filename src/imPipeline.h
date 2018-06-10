@@ -8,6 +8,7 @@ static std::vector<char> ReadFile(const std::string &filename);
 
 class imPipeline {
 public:
+	void CreateDescriptorSetLayout();
 	void CreateGraphicsPipeline(VkExtent2D extent,
 		std::string vertexFile, std::string fragFile);
 	void CreateRenderPass(VkFormat format);

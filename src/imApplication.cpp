@@ -18,6 +18,7 @@ void imApplication::Run() {
 		// Synchronize after running update code, rather then before,
 		// that way can delay synchronization as long as possible.
 		if (VALIDATION_LAYERS_ENABLED) { vkDeviceWaitIdle(device); }
+		UpdateUniformBuffer();
 		DrawFrame();
 	}
 
@@ -26,6 +27,35 @@ void imApplication::Run() {
 
 void imApplication::Update() {
 	// TODO
+}
+
+void imApplication::UpdateUniformBuffer() {
+	// Compute the total runtime of this application.
+	static auto startTime = std::chrono::high_resolution_clock::now();
+	auto currentTime = std::chrono::high_resolution_clock::now();
+	float time = std::chrono::duration<float, std::chrono::seconds::period>(
+		currentTime - startTime).count();
+
+	// Next start generating our MVP matrices.
+	UniformBufferObject ubo = { };
+	// rotate the identity, at 90 degrees/second, about the positive z axis
+	ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f),
+		glm::vec3(0.0f, 0.0f, 1.0f));
+	// look position, camera position, up vector
+	ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f),
+		glm::vec3(0.0f, 0.0f, 1.0f));
+	// projection matrix with 45 degrees of FOV, swap chain aspect ratio, near
+	// plan and far plane distances.
+	ubo.proj = glm::perspective(glm::radians(45.0f), swapchain.extent.width /
+		(float)swapchain.extent.height, 0.1f, 10.0f);
+	// OpenGL -> Vulkan space conversion.
+	ubo.proj[1][1] *= -1;
+
+	// Now we can transfer this data to the GPU.
+	void * data;
+	vkMapMemory(device, uniformBufferMemory, 0, sizeof(ubo), 0, &data);
+	memcpy(data, &ubo, sizeof(ubo));
+	vkUnmapMemory(device, uniformBufferMemory);
 }
 
 void imApplication::DrawFrame() {
@@ -112,6 +142,7 @@ void imApplication::InitVulkan() {
 	swapchain.CreateSwapChain();
 	swapchain.CreateImageViews();
 	pipeline.CreateRenderPass(swapchain.imageFormat);
+	VKBuilder::CreateDescriptorSetLayout(descriptorSetLayout);
 	pipeline.CreateGraphicsPipeline(swapchain.extent, 
 		"shaders/vert.spv", "shaders/frag.spv");
 	swapchain.CreateFrameBuffers(pipeline.renderPass);
@@ -119,6 +150,7 @@ void imApplication::InitVulkan() {
 	// Create the command buffers for submitting commands.
 	VKBuilder::CreateCommandPoool(commandPool);
 	mesh.Create();
+	VKBuilder::CreateUniformBuffer(uniformBuffer, uniformBufferMemory);
 	VKBuilder::CreateCommandBuffers(commandPool, pipeline, 
 		swapchain, mesh, commandBuffers);
 	InitSemaphores();
@@ -165,6 +197,10 @@ void imApplication::Cleanup() {
 	
 	CleanupSwapChain();
 	mesh.Cleanup();
+
+	vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+	vkDestroyBuffer(device, uniformBuffer, nullptr);
+	vkFreeMemory(device, uniformBufferMemory, nullptr);
 	
 	vkDestroySemaphore(device, renderFinishedSemaphore, nullptr);
 	vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);

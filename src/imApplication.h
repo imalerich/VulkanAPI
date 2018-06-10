@@ -38,6 +38,7 @@ private:
 	static void OnWindowResized(GLFWwindow * window, int width, int height);
 
 	void Update();
+	void UpdateUniformBuffer();
 	void DrawFrame();
 	void Cleanup();
 
@@ -45,6 +46,13 @@ private:
 	imPipeline pipeline;
 	/// Will hold a basic configuratio for our swap chain.
 	imSwapChain swapchain;
+
+	/// Describes the layout of uniforms within our shaders.
+	VkDescriptorSetLayout descriptorSetLayout;
+	/// Describes the buffer storing the vertex transformation matrices.
+	VkBuffer uniformBuffer;
+	/// Allocated GPU memory for storing the vertex transformation matrices.
+	VkDeviceMemory uniformBufferMemory;
 
 	/// Stores mesh data we wish to render.
 	imMesh mesh;

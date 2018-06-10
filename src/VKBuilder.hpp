@@ -3,6 +3,7 @@
 
 #include "PREFIX.h"
 #include "imVulkan.h"
+#include "imBuffer.h"
 #include "VKDebug.hpp"
 
 #include "imMesh.h"
@@ -291,7 +292,8 @@ public:
 			VkBuffer vertexBuffers[] = { mesh.vertexBuffer };
 			VkDeviceSize offsets[] = { 0 };
 			vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
-			vkCmdBindIndexBuffer(commandBuffers[i], mesh.indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+			vkCmdBindIndexBuffer(commandBuffers[i], mesh.indexBuffer, 
+				0, VK_INDEX_TYPE_UINT16);
 
 			vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(INDICES.size()),
 				1, 0, 0, 0);
@@ -304,6 +306,34 @@ public:
 				throw std::runtime_error("Failed to record command buffer!");
 			}
 		}
+	}
+
+	static void CreateDescriptorSetLayout(VkDescriptorSetLayout &layout) {
+		VkDescriptorSetLayoutBinding uboLayoutBinding = { };
+		uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		uboLayoutBinding.descriptorCount = 1;
+		uboLayoutBinding.binding = 0;
+
+		uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+		uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
+
+		VkDescriptorSetLayoutCreateInfo layoutInfo = { };
+		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		layoutInfo.bindingCount = 1;
+		layoutInfo.pBindings = &uboLayoutBinding;
+
+		if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &layout) 
+				!= VK_SUCCESS) {
+			throw std::runtime_error("Failed to create descriptor set layout!");
+		}
+	}
+
+	static void CreateUniformBuffer(VkBuffer &uniformBuffer, 
+			VkDeviceMemory &uniformBufferMemory) {
+		VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+		CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			uniformBuffer, uniformBufferMemory);
 	}
 
 private:

@@ -1,5 +1,5 @@
 #include "imMesh.h"
-#include "imBuffer.hpp"
+#include "imBuffer.h"
 
 void imMesh::Create() {
 	CreateVertexBuffer();

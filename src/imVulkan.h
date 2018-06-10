@@ -53,4 +53,11 @@ QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice &pDevice, VkSurfaceKHR &su
 /// Query swap chain support for the given physical device.
 SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice &pDevice);
 
+/// Describes a buffer of data we want to pass globally to our shaders.
+struct UniformBufferObject {
+	glm::mat4 model;
+	glm::mat4 view;
+	glm::mat4 proj;
+};
+
 #endif

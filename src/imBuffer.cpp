@@ -1,7 +1,4 @@
-#ifndef IM_BUFFER_H
-#define IM_BUFFER_H
-
-#include "imVulkan.h"
+#include "imBuffer.h"
 
 /// Find a memory type that fits the input needs for our physical device.
 uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
@@ -88,5 +85,3 @@ void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
 
 	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }
-
-#endif
