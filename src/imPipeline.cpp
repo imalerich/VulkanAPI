@@ -22,7 +22,8 @@ static std::vector<char> ReadFile(const std::string &filename) {
 }
 
 void imPipeline::CreateGraphicsPipeline(VkExtent2D extent,
-		std::string vertexFile, std::string fragFile) {
+		std::string vertexFile, std::string fragFile,
+		VkDescriptorSetLayout &setLayout) {
 	auto vertCode = ReadFile(vertexFile);
 	auto fragCode = ReadFile(fragFile);
 
@@ -106,8 +107,8 @@ void imPipeline::CreateGraphicsPipeline(VkExtent2D extent,
 	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
 	rasterizer.lineWidth = 1.0f;
 
-	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-	rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;;
+	rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
 	rasterizer.depthBiasEnable = VK_FALSE;
 	rasterizer.depthBiasConstantFactor = 0.0f; // Optional
@@ -171,8 +172,8 @@ void imPipeline::CreateGraphicsPipeline(VkExtent2D extent,
 	
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = { };
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = 0; // Optional
-	pipelineLayoutInfo.pSetLayouts = nullptr; // Optional
+	pipelineLayoutInfo.setLayoutCount = 1;
+	pipelineLayoutInfo.pSetLayouts = &setLayout;
 	pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
 	pipelineLayoutInfo.pPushConstantRanges = 0; // Optional
 

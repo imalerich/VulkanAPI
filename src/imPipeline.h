@@ -10,7 +10,8 @@ class imPipeline {
 public:
 	void CreateDescriptorSetLayout();
 	void CreateGraphicsPipeline(VkExtent2D extent,
-		std::string vertexFile, std::string fragFile);
+		std::string vertexFile, std::string fragFile,
+		VkDescriptorSetLayout &setLayout);
 	void CreateRenderPass(VkFormat format);
 	void Cleanup();
 

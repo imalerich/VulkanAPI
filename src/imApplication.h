@@ -42,13 +42,19 @@ private:
 	void DrawFrame();
 	void Cleanup();
 
+	void CreateCommandBuffers();
+
 	/// Will hold a basic configuration for our graphics pipeline.
 	imPipeline pipeline;
 	/// Will hold a basic configuratio for our swap chain.
 	imSwapChain swapchain;
 
-	/// Describes the layout of uniforms within our shaders.
+	/// Describes the bindings within the shader.
 	VkDescriptorSetLayout descriptorSetLayout;
+	/// The pool from which we can allocate descriptor sets.
+	VkDescriptorPool descriptorPool;
+	/// Set of descriptors describing mapping of the ubo to the bindings.
+	VkDescriptorSet descriptorSet;
 	/// Describes the buffer storing the vertex transformation matrices.
 	VkBuffer uniformBuffer;
 	/// Allocated GPU memory for storing the vertex transformation matrices.

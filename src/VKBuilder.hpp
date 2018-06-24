@@ -245,76 +245,12 @@ public:
 		}
 	}
 
-	static void CreateCommandBuffers(VkCommandPool &commandPool,
-			imPipeline &pipeline, imSwapChain &swapchain, imMesh &mesh,
-			std::vector<VkCommandBuffer> &commandBuffers) {
-
-		commandBuffers.resize(swapchain.frameBuffers.size());
-
-		VkCommandBufferAllocateInfo allocInfo = { };
-		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		allocInfo.commandPool = commandPool;
-		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
-
-		if (vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data()) 
-				!= VK_SUCCESS) {
-			throw std::runtime_error("Failed to create command buffers!");
-		}
-
-		for (size_t i = 0; i < commandBuffers.size(); i++) {
-			VkCommandBufferBeginInfo beginInfo = { };
-			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-			beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-			beginInfo.pInheritanceInfo = nullptr; // Optional
-
-			// Begin recording to the command buffer (implicitly reset buffer).
-			vkBeginCommandBuffer(commandBuffers[i], &beginInfo);
-
-			VkRenderPassBeginInfo renderPassInfo = { };
-			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-			renderPassInfo.renderPass = pipeline.renderPass;
-			renderPassInfo.framebuffer = swapchain.frameBuffers[i];
-			renderPassInfo.renderArea.offset = { 0, 0 };
-			renderPassInfo.renderArea.extent = swapchain.extent;
-			VkClearValue clearColor = { 0.05f, 0.05f, 0.1f, 1.0f };
-			renderPassInfo.clearValueCount = 1;
-			renderPassInfo.pClearValues = &clearColor;
-
-			// Begin the render pass, can now submit drawing commands.
-			vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, 
-				VK_SUBPASS_CONTENTS_INLINE);
-
-			vkCmdBindPipeline(commandBuffers[i], 
-				VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.graphicsPipeline);
-
-			// Bind the vertex buffer for rendering.
-			VkBuffer vertexBuffers[] = { mesh.vertexBuffer };
-			VkDeviceSize offsets[] = { 0 };
-			vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
-			vkCmdBindIndexBuffer(commandBuffers[i], mesh.indexBuffer, 
-				0, VK_INDEX_TYPE_UINT16);
-
-			vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(INDICES.size()),
-				1, 0, 0, 0);
-
-			// End the render pass, stop submitting draw commands.
-			vkCmdEndRenderPass(commandBuffers[i]);
-
-			// Stop recording to the command buffer.
-			if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
-				throw std::runtime_error("Failed to record command buffer!");
-			}
-		}
-	}
-
 	static void CreateDescriptorSetLayout(VkDescriptorSetLayout &layout) {
 		VkDescriptorSetLayoutBinding uboLayoutBinding = { };
 		uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 		uboLayoutBinding.descriptorCount = 1;
 		uboLayoutBinding.binding = 0;
-
-		uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 		uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
 
 		VkDescriptorSetLayoutCreateInfo layoutInfo = { };
@@ -334,6 +270,58 @@ public:
 		CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 			uniformBuffer, uniformBufferMemory);
+	}
+
+	static void CreateDescriptorPool(VkDescriptorPool &pool) {
+		VkDescriptorPoolSize poolSize = {};
+		poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		poolSize.descriptorCount = 1;
+		
+		VkDescriptorPoolCreateInfo poolInfo = {};
+		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+		poolInfo.poolSizeCount = 1;
+		poolInfo.pPoolSizes = &poolSize;
+		poolInfo.maxSets = 1;
+
+		if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &pool) 
+				!= VK_SUCCESS) {
+			throw std::runtime_error("Failed to create descriptor pool!");
+		}
+
+	}
+
+	static void CreateDescriptorSet(VkDescriptorPool &pool, VkDescriptorSet &descSet, 
+			VkBuffer &buffer, VkDescriptorSetLayout &layout) {
+		VkDescriptorSetLayout layouts[] = { layout };
+
+		VkDescriptorSetAllocateInfo allocInfo = {};
+		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		allocInfo.descriptorPool = pool;
+		allocInfo.descriptorSetCount = 1;
+		allocInfo.pSetLayouts = layouts;
+
+		if (vkAllocateDescriptorSets(device, &allocInfo, &descSet) != VK_SUCCESS) {
+			throw std::runtime_error("Failed to allocate descriptor set!");
+		}
+
+		VkDescriptorBufferInfo bufferInfo = {};
+		bufferInfo.buffer = buffer;
+		bufferInfo.offset = 0;
+		bufferInfo.range = sizeof(buffer);
+
+		VkWriteDescriptorSet descriptorWrite = {};
+		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrite.dstSet = descSet;
+		descriptorWrite.dstBinding = 0;
+		descriptorWrite.dstArrayElement = 0;
+
+		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptorWrite.descriptorCount = 1;
+		descriptorWrite.pBufferInfo = &bufferInfo;
+		descriptorWrite.pImageInfo = nullptr; // Optional
+		descriptorWrite.pTexelBufferView = nullptr; // Optional
+
+		vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
 	}
 
 private:

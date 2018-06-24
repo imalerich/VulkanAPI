@@ -144,15 +144,17 @@ void imApplication::InitVulkan() {
 	pipeline.CreateRenderPass(swapchain.imageFormat);
 	VKBuilder::CreateDescriptorSetLayout(descriptorSetLayout);
 	pipeline.CreateGraphicsPipeline(swapchain.extent, 
-		"shaders/vert.spv", "shaders/frag.spv");
+		"shaders/vert.spv", "shaders/frag.spv", descriptorSetLayout);
 	swapchain.CreateFrameBuffers(pipeline.renderPass);
 
 	// Create the command buffers for submitting commands.
 	VKBuilder::CreateCommandPoool(commandPool);
 	mesh.Create();
 	VKBuilder::CreateUniformBuffer(uniformBuffer, uniformBufferMemory);
-	VKBuilder::CreateCommandBuffers(commandPool, pipeline, 
-		swapchain, mesh, commandBuffers);
+	VKBuilder::CreateDescriptorPool(descriptorPool);
+	VKBuilder::CreateDescriptorSet(descriptorPool, descriptorSet, 
+		uniformBuffer, descriptorSetLayout);
+	CreateCommandBuffers();
 	InitSemaphores();
 }
 
@@ -174,10 +176,9 @@ void imApplication::RecreateSwapChain() {
 	swapchain.CreateImageViews();
 	pipeline.CreateRenderPass(swapchain.imageFormat);
 	pipeline.CreateGraphicsPipeline(swapchain.extent, 
-		"shaders/vert.spv", "shaders/frag.spv");
+		"shaders/vert.spv", "shaders/frag.spv", descriptorSetLayout);
 	swapchain.CreateFrameBuffers(pipeline.renderPass);
-	VKBuilder::CreateCommandBuffers(commandPool, pipeline, 
-		swapchain, mesh, commandBuffers);
+	CreateCommandBuffers();
 }
 
 void imApplication::InitSemaphores() {
@@ -198,6 +199,7 @@ void imApplication::Cleanup() {
 	CleanupSwapChain();
 	mesh.Cleanup();
 
+	vkDestroyDescriptorPool(device, descriptorPool, nullptr);
 	vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 	vkDestroyBuffer(device, uniformBuffer, nullptr);
 	vkFreeMemory(device, uniformBufferMemory, nullptr);
@@ -229,4 +231,66 @@ void imApplication::OnWindowResized(GLFWwindow * window, int width, int height) 
 	imApplication * app = reinterpret_cast<imApplication *>(
 		glfwGetWindowUserPointer(window));
 	app->RecreateSwapChain();
+}
+
+void imApplication::CreateCommandBuffers() {
+	commandBuffers.resize(swapchain.frameBuffers.size());
+
+	VkCommandBufferAllocateInfo allocInfo = { };
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.commandPool = commandPool;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
+
+	if (vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data()) 
+			!= VK_SUCCESS) {
+		throw std::runtime_error("Failed to create command buffers!");
+	}
+
+	for (size_t i = 0; i < commandBuffers.size(); i++) {
+		VkCommandBufferBeginInfo beginInfo = { };
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+		beginInfo.pInheritanceInfo = nullptr; // Optional
+
+		// Begin recording to the command buffer (implicitly reset buffer).
+		vkBeginCommandBuffer(commandBuffers[i], &beginInfo);
+
+		VkRenderPassBeginInfo renderPassInfo = { };
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		renderPassInfo.renderPass = pipeline.renderPass;
+		renderPassInfo.framebuffer = swapchain.frameBuffers[i];
+		renderPassInfo.renderArea.offset = { 0, 0 };
+		renderPassInfo.renderArea.extent = swapchain.extent;
+		VkClearValue clearColor = { 0.05f, 0.05f, 0.1f, 1.0f };
+		renderPassInfo.clearValueCount = 1;
+		renderPassInfo.pClearValues = &clearColor;
+
+		// Begin the render pass, can now submit drawing commands.
+		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, 
+			VK_SUBPASS_CONTENTS_INLINE);
+
+		vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, 
+			pipeline.pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
+		vkCmdBindPipeline(commandBuffers[i], 
+			VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.graphicsPipeline);
+
+		// Bind the vertex buffer for rendering.
+		VkBuffer vertexBuffers[] = { mesh.vertexBuffer };
+		VkDeviceSize offsets[] = { 0 };
+		vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
+		vkCmdBindIndexBuffer(commandBuffers[i], mesh.indexBuffer, 
+			0, VK_INDEX_TYPE_UINT16);
+
+		vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(INDICES.size()),
+			1, 0, 0, 0);
+
+		// End the render pass, stop submitting draw commands.
+		vkCmdEndRenderPass(commandBuffers[i]);
+
+		// Stop recording to the command buffer.
+		if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
+			throw std::runtime_error("Failed to record command buffer!");
+		}
+	}
 }
