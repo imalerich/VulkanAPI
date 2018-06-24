@@ -150,6 +150,7 @@ void imApplication::InitVulkan() {
 	// Create the command buffers for submitting commands.
 	VKBuilder::CreateCommandPoool(commandPool);
 	mesh.Create();
+	image.Create("tex/caco.png");
 	VKBuilder::CreateUniformBuffer(uniformBuffer, uniformBufferMemory);
 	VKBuilder::CreateDescriptorPool(descriptorPool);
 	VKBuilder::CreateDescriptorSet(descriptorPool, descriptorSet, 
@@ -198,6 +199,7 @@ void imApplication::Cleanup() {
 	
 	CleanupSwapChain();
 	mesh.Cleanup();
+	image.Cleanup();
 
 	vkDestroyDescriptorPool(device, descriptorPool, nullptr);
 	vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
@@ -262,7 +264,7 @@ void imApplication::CreateCommandBuffers() {
 		renderPassInfo.framebuffer = swapchain.frameBuffers[i];
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = swapchain.extent;
-		VkClearValue clearColor = { 0.05f, 0.05f, 0.1f, 1.0f };
+		VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
 		renderPassInfo.clearValueCount = 1;
 		renderPassInfo.pClearValues = &clearColor;
 

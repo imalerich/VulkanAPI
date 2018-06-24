@@ -60,4 +60,9 @@ struct UniformBufferObject {
 	glm::mat4 proj;
 };
 
+/// Create a command bufer which we only wish to submit once.
+VkCommandBuffer BeginSingleTimeCommands();
+/// Submit, wait, then free the input command buffer.
+void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
+
 #endif

@@ -123,7 +123,11 @@ public:
 			swapChainAdequate = !support.formats.empty() && !support.presentModes.empty();
 		}
 
-		return indices.IsComplete() && swapChainAdequate && extensionsSupported;
+		VkPhysicalDeviceFeatures supportedFeatures;
+		vkGetPhysicalDeviceFeatures(pDevice, &supportedFeatures);
+
+		return indices.IsComplete() && swapChainAdequate && extensionsSupported &&
+			supportedFeatures.samplerAnisotropy;
 	}
 
 	static bool CheckDeviceExtensionsSupport(
@@ -168,6 +172,7 @@ public:
 
 		// Any additional features we need (e.g. Geometry Shaders).
 		VkPhysicalDeviceFeatures deviceFeatures = { };
+		deviceFeatures.samplerAnisotropy = VK_TRUE;
 
 		VkDeviceCreateInfo createInfo = { };
 		createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;

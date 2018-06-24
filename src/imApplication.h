@@ -5,6 +5,7 @@
 #include "imVulkan.h"
 
 #include "imMesh.h"
+#include "imImage.h"
 #include "imPipeline.h"
 #include "imSwapChain.h"
 
@@ -62,6 +63,8 @@ private:
 
 	/// Stores mesh data we wish to render.
 	imMesh mesh;
+	/// Stores the image to map to the mesh.
+	imImage image;
 
 	/// We need one command buffer for each framebuffer in the swap chain.
 	std::vector<VkCommandBuffer> commandBuffers;
