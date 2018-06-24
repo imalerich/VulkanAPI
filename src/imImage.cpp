@@ -61,7 +61,7 @@ void imImage::Allocate(uint32_t width, uint32_t height, VkFormat imageFormat,
 		VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
 		VkImage &image, VkDeviceMemory &memory) {
 
-	VkImageCreateInfo imageInfo = {};
+	VkImageCreateInfo imageInfo = { };
 	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	imageInfo.imageType = VK_IMAGE_TYPE_2D;
 	imageInfo.extent.width = width;
@@ -85,7 +85,7 @@ void imImage::Allocate(uint32_t width, uint32_t height, VkFormat imageFormat,
 	VkMemoryRequirements memReqs;
 	vkGetImageMemoryRequirements(device, image, &memReqs);
 
-	VkMemoryAllocateInfo allocInfo = {};
+	VkMemoryAllocateInfo allocInfo = { };
 	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	allocInfo.allocationSize = memReqs.size;
 	allocInfo.memoryTypeIndex = FindMemoryType(memReqs.memoryTypeBits, 
@@ -101,7 +101,7 @@ void imImage::Allocate(uint32_t width, uint32_t height, VkFormat imageFormat,
 void imImage::TransitionImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout) {
 	VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
 
-	VkImageMemoryBarrier barrier = {};
+	VkImageMemoryBarrier barrier = { };
 	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 	barrier.oldLayout = oldLayout;
 	barrier.newLayout = newLayout;
@@ -151,7 +151,7 @@ void imImage::TransitionImageLayout(VkImageLayout oldLayout, VkImageLayout newLa
 void imImage::CopyBufferToImage(VkBuffer buffer) {
 	VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
 
-	VkBufferImageCopy region = {};
+	VkBufferImageCopy region = { };
 	region.bufferOffset = 0;
 	region.bufferRowLength = 0;
 	region.bufferImageHeight = 0;
@@ -173,7 +173,7 @@ void imImage::CopyBufferToImage(VkBuffer buffer) {
 }
 
 VkImageView imImage::CreateView(VkImage image, VkFormat format) {
-	VkImageViewCreateInfo viewInfo = {};
+	VkImageViewCreateInfo viewInfo = { };
 	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	viewInfo.image = image;
 	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
@@ -193,7 +193,7 @@ VkImageView imImage::CreateView(VkImage image, VkFormat format) {
 }
 
 void imImage::CreateSampler() {
-	VkSamplerCreateInfo samplerInfo = {};
+	VkSamplerCreateInfo samplerInfo = { };
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 	samplerInfo.magFilter = VK_FILTER_LINEAR;
 	samplerInfo.minFilter = VK_FILTER_LINEAR;

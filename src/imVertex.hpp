@@ -11,6 +11,7 @@ class imVertex {
 public:
 	glm::vec2 pos;
 	glm::vec3 color;
+	glm::vec2 texCoord;
 
 	static VkVertexInputBindingDescription GetBindingDescription() {
 		VkVertexInputBindingDescription bindingDesc = { };
@@ -21,8 +22,8 @@ public:
 		return bindingDesc;
 	}
 
-	static std::array<VkVertexInputAttributeDescription, 2> GetAttrDescription() {
-		std::array<VkVertexInputAttributeDescription, 2> attrDesc = { };
+	static std::array<VkVertexInputAttributeDescription, 3> GetAttrDescription() {
+		std::array<VkVertexInputAttributeDescription, 3> attrDesc = { };
 
 		attrDesc[0].binding = 0;
 		attrDesc[0].location = 0;
@@ -34,16 +35,21 @@ public:
 		attrDesc[1].format = VK_FORMAT_R32G32B32_SFLOAT;
 		attrDesc[1].offset = offsetof(imVertex, color);
 
+		attrDesc[2].binding = 0;
+		attrDesc[2].location = 2;
+		attrDesc[2].format = VK_FORMAT_R32G32_SFLOAT;
+		attrDesc[2].offset = offsetof(imVertex, texCoord);
+
 		return attrDesc;
 	}
 };
 
 /// Temporary constant array of vertices for testing.
 const std::vector<imVertex> VERTICES = {
-	{{-0.5f, -0.5f},	{1.0f, 0.2f, 0.0f}},
-	{{ 0.5f, -0.5f},	{0.0f, 0.4f, 0.6f}},
-	{{ 0.5f,  0.5f},	{0.0f, 1.0f, 1.0f}},
-	{{-0.5f,  0.5f},	{0.2f, 0.1f, 0.5f}},
+	{ { -1.0f, -1.0f },	{ 1.0f, 0.2f, 0.0f },	{ 1.0f, 0.0f } },
+	{ {  1.0f, -1.0f },	{ 0.0f, 0.4f, 0.6f },	{ 0.0f, 0.0f } },
+	{ {  1.0f,  1.0f },	{ 0.0f, 1.0f, 1.0f },	{ 0.0f, 1.0f } },
+	{ { -1.0f,  1.0f },	{ 0.2f, 0.1f, 0.5f },	{ 1.0f, 1.0f } },
 };
 
 const std::vector<uint16_t> INDICES = {

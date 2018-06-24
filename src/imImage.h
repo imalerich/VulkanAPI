@@ -19,7 +19,6 @@ public:
 	
 	void Cleanup();
 
-private:
 	VkImage image;
 	VkImageView view;
 	VkSampler sampler;
