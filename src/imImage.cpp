@@ -37,12 +37,13 @@ void imImage::Create(std::string filename) {
 		VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, memory);
 
-	TransitionImageLayout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	imImage::TransitionImageLayout(image, imageFormat, VK_IMAGE_LAYOUT_UNDEFINED, 
+		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 	CopyBufferToImage(stagingBuffer);
-	TransitionImageLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
+	imImage::TransitionImageLayout(image, imageFormat, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
 		VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-	view = imImage::CreateView(image, imageFormat);
+	view = imImage::CreateView(image, imageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
 	CreateSampler();
 
 	// Cleanup
@@ -98,7 +99,9 @@ void imImage::Allocate(uint32_t width, uint32_t height, VkFormat imageFormat,
 	vkBindImageMemory(device, image, memory, 0);
 }
 
-void imImage::TransitionImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout) {
+void imImage::TransitionImageLayout(VkImage image, VkFormat format, 
+		VkImageLayout oldLayout, VkImageLayout newLayout) {
+
 	VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
 
 	VkImageMemoryBarrier barrier = { };
@@ -110,11 +113,20 @@ void imImage::TransitionImageLayout(VkImageLayout oldLayout, VkImageLayout newLa
 	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 
 	barrier.image = image;
-	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 	barrier.subresourceRange.baseMipLevel = 0;
 	barrier.subresourceRange.levelCount = 1;
 	barrier.subresourceRange.baseArrayLayer = 0;
 	barrier.subresourceRange.layerCount = 1;
+
+	if (newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
+		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+
+		if (HasStencilComponent(format)) {
+			barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+		}
+	} else {
+		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	}
 
 	VkPipelineStageFlags sourceStage;
 	VkPipelineStageFlags dstStage;
@@ -134,6 +146,15 @@ void imImage::TransitionImageLayout(VkImageLayout oldLayout, VkImageLayout newLa
 
 		sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 		dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+
+	} else if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED &&
+			newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
+		barrier.srcAccessMask = 0;
+		barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
+			VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+		sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		dstStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 
 	} else {
 		throw std::runtime_error("Unsupported layout transition!");
@@ -172,13 +193,15 @@ void imImage::CopyBufferToImage(VkBuffer buffer) {
 	EndSingleTimeCommands(commandBuffer);
 }
 
-VkImageView imImage::CreateView(VkImage image, VkFormat format) {
+VkImageView imImage::CreateView(VkImage image, VkFormat format, 
+		VkImageAspectFlags aspectFlags) {
+
 	VkImageViewCreateInfo viewInfo = { };
 	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	viewInfo.image = image;
 	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 	viewInfo.format = format;
-	viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	viewInfo.subresourceRange.aspectMask = aspectFlags;
 	viewInfo.subresourceRange.baseMipLevel = 0;
 	viewInfo.subresourceRange.levelCount = 1;
 	viewInfo.subresourceRange.baseArrayLayer = 0;

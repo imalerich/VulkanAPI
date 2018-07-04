@@ -53,6 +53,14 @@ QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice &pDevice, VkSurfaceKHR &su
 /// Query swap chain support for the given physical device.
 SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice &pDevice);
 
+/// True if the input format has a stencil component.
+bool HasStencilComponent(VkFormat format);
+/// Choose the best format available to use for the depth buffer.
+VkFormat FindDepthFormat();
+/// Find available formats to use when creating the depth buffer.
+VkFormat FindSupportedFormat(const std::vector<VkFormat> &candidates,
+	VkImageTiling tiling, VkFormatFeatureFlags features);
+
 /// Describes a buffer of data we want to pass globally to our shaders.
 struct UniformBufferObject {
 	glm::mat4 model;

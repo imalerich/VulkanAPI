@@ -11,9 +11,11 @@ public:
 	static void Allocate(uint32_t width, uint32_t height, VkFormat imageFormat,
 		VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
 		VkImage &image, VkDeviceMemory &memory);
-	static VkImageView CreateView(VkImage image, VkFormat format);
+	static VkImageView CreateView(VkImage image, VkFormat format, 
+		VkImageAspectFlags aspectFlags);
+	static void TransitionImageLayout(VkImage image, VkFormat format, 
+		VkImageLayout oldLayout, VkImageLayout newLayout);
 
-	void TransitionImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout);
 	void CopyBufferToImage(VkBuffer buffer);
 	void CreateSampler();
 	

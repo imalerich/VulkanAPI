@@ -2,6 +2,7 @@
 #define IM_SWAPCHAIN_H
 
 #include "imVulkan.h"
+#include "imImage.h"
 #include "PREFIX.h"
 
 class imSwapChain {
@@ -15,6 +16,9 @@ public:
 	/// Generate the 'frameBuffers' array encapsulating
 	/// the given render pass.
 	void CreateFrameBuffers(VkRenderPass &renderPass);
+
+	/// Create and allocate the depth buffer.
+	void CreateDepthBuffer();
 
 	/// Cleanup data stored by the swap chain.
 	void Cleanup();
@@ -30,6 +34,13 @@ public:
 	VkFormat imageFormat;
 	/// Extent of the swap chain images used to create the swap chain.
 	VkExtent2D extent;
+
+	/// Image to use for the depth buffer, we only need one.
+	VkImage depthImage;
+	/// Use to allocate and free memory for the depth buffer.
+	VkDeviceMemory depthImageMemory;
+	/// View into the depth buffer.
+	VkImageView depthImageView;
 
 	/// Handles to each image contained within our swap chain.
 	std::vector<VkImage> images;

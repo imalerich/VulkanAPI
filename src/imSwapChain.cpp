@@ -85,6 +85,10 @@ void imSwapChain::CreateSwapChain() {
 }
 
 void imSwapChain::Cleanup() {
+	vkDestroyImageView(device, depthImageView, nullptr);
+	vkDestroyImage(device, depthImage, nullptr);
+	vkFreeMemory(device, depthImageMemory, nullptr);
+
 	for (size_t i = 0; i < frameBuffers.size(); i++) {
 		vkDestroyFramebuffer(device, frameBuffers[i], nullptr);
 	}
@@ -166,7 +170,7 @@ void imSwapChain::CreateImageViews() {
 	imageViews.resize(images.size());
 
 	for (size_t i = 0; i < images.size(); i++) {
-		imageViews[i] = imImage::CreateView(images[i], imageFormat);
+		imageViews[i] = imImage::CreateView(images[i], imageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
 	} 
 }
 
@@ -176,15 +180,16 @@ void imSwapChain::CreateFrameBuffers(VkRenderPass &renderPass) {
 	for (size_t i = 0; i < imageViews.size(); i++) {
 		// We only have a color attachment, but we could
 		// also include a depth attachment here.
-		VkImageView attachments[] = {
-			imageViews[i]
+		std::array<VkImageView, 2> attachments = {
+			imageViews[i],
+			depthImageView
 		};
 
 		VkFramebufferCreateInfo fbInfo = { };
 		fbInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		fbInfo.renderPass = renderPass;
-		fbInfo.attachmentCount = 1;
-		fbInfo.pAttachments = attachments;
+		fbInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+		fbInfo.pAttachments = attachments.data();
 		fbInfo.width = extent.width;
 		fbInfo.height = extent.height;
 		fbInfo.layers = 1;
@@ -194,4 +199,14 @@ void imSwapChain::CreateFrameBuffers(VkRenderPass &renderPass) {
 			throw std::runtime_error("Failed to create frame buffer!");
 		}
 	}
+}
+
+void imSwapChain::CreateDepthBuffer() {
+	VkFormat depthFormat = FindDepthFormat();
+	imImage::Allocate(extent.width, extent.height, depthFormat,
+		VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImage, depthImageMemory);
+	depthImageView = imImage::CreateView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
+	imImage::TransitionImageLayout(depthImage, depthFormat, 
+		VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 }

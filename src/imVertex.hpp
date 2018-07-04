@@ -9,7 +9,7 @@
 /// Defines the format we'll use to send vertex data to the gPU.
 class imVertex {
 public:
-	glm::vec2 pos;
+	glm::vec3 pos;
 	glm::vec3 color;
 	glm::vec2 texCoord;
 
@@ -27,7 +27,7 @@ public:
 
 		attrDesc[0].binding = 0;
 		attrDesc[0].location = 0;
-		attrDesc[0].format = VK_FORMAT_R32G32_SFLOAT;
+		attrDesc[0].format = VK_FORMAT_R32G32B32_SFLOAT;
 		attrDesc[0].offset = offsetof(imVertex, pos);
 
 		attrDesc[1].binding = 0;
@@ -46,14 +46,20 @@ public:
 
 /// Temporary constant array of vertices for testing.
 const std::vector<imVertex> VERTICES = {
-	{ { -1.0f, -1.0f },	{ 1.0f, 0.2f, 0.0f },	{ 1.0f, 0.0f } },
-	{ {  1.0f, -1.0f },	{ 0.0f, 0.4f, 0.6f },	{ 0.0f, 0.0f } },
-	{ {  1.0f,  1.0f },	{ 0.0f, 1.0f, 1.0f },	{ 0.0f, 1.0f } },
-	{ { -1.0f,  1.0f },	{ 0.2f, 0.1f, 0.5f },	{ 1.0f, 1.0f } },
+	{ { -0.5f, -0.5f,  0.25f },	{ 1.0f, 0.2f, 0.0f },	{ 1.0f, 0.0f } },
+	{ {  0.5f, -0.5f,  0.25f },	{ 0.0f, 0.4f, 0.6f },	{ 0.0f, 0.0f } },
+	{ {  0.5f,  0.5f,  0.25f },	{ 0.0f, 1.0f, 1.0f },	{ 0.0f, 1.0f } },
+	{ { -0.5f,  0.5f,  0.25f },	{ 0.2f, 0.1f, 0.5f },	{ 1.0f, 1.0f } },
+
+	{ { -0.5f, -0.5f, -0.25f },	{ 1.0f, 0.2f, 0.0f },	{ 1.0f, 0.0f } },
+	{ {  0.5f, -0.5f, -0.25f },	{ 0.0f, 0.4f, 0.6f },	{ 0.0f, 0.0f } },
+	{ {  0.5f,  0.5f, -0.25f },	{ 0.0f, 1.0f, 1.0f },	{ 0.0f, 1.0f } },
+	{ { -0.5f,  0.5f, -0.25f },	{ 0.2f, 0.1f, 0.5f },	{ 1.0f, 1.0f } },
 };
 
 const std::vector<uint16_t> INDICES = {
-	0, 1, 2, 2, 3, 0
+	0, 1, 2, 2, 3, 0,
+	4, 5, 6, 6, 7, 4,
 };
 
 #endif
